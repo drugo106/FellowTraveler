@@ -26,12 +26,12 @@ public class RetrieveElevationTask extends AsyncTask<Double, Void, String> {
                 URL url = new URL("https://api.opentopodata.org/v1/eudem25m?locations=" + coord[0] + "," + coord[1]);
                 oldLat = coord[0];
                 oldLong = coord[1];
-                System.out.println(url);
+                //System.out.println(url);
                 HttpURLConnection urlConnection = (HttpURLConnection) url.openConnection();
                 InputStream in = new BufferedInputStream(urlConnection.getInputStream());
                 String res = IOUtils.toString(in, StandardCharsets.UTF_8);
                 JSONObject json = new JSONObject(res);
-                System.out.println(res);
+                //System.out.println(res);
                 result = json.getJSONArray("results").getJSONObject(0).getString("elevation");
                 if(result.equals("null"))
                     result = "0";
@@ -47,4 +47,6 @@ public class RetrieveElevationTask extends AsyncTask<Double, Void, String> {
         System.out.println("cazzolone");
         return result;
     }
+
+
 }

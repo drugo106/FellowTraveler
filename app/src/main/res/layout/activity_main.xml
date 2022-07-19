@@ -66,7 +66,7 @@
         app:layout_constraintTop_toTopOf="parent" />
 
     <Button
-        android:id="@+id/mPosition"
+        android:id="@+id/my_position_btn"
         android:layout_width="49dp"
         android:layout_height="53dp"
         android:background="@android:drawable/ic_menu_search"
@@ -78,7 +78,7 @@
         app:layout_constraintVertical_bias="0.953" />
 
     <Button
-        android:id="@+id/mRecord"
+        android:id="@+id/record_btn"
         android:layout_width="49dp"
         android:layout_height="53dp"
         android:background="@android:drawable/ic_media_play"

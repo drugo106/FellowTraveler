@@ -132,7 +132,7 @@ public class MainActivity extends AppCompatActivity {
             }
         }.start();
 
-        findViewById(R.id.mPosition).setOnClickListener(new View.OnClickListener() {
+        findViewById(R.id.my_position_btn).setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
                 followMyLocation();
@@ -147,7 +147,7 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
-        findViewById(R.id.mRecord).setOnClickListener(new View.OnClickListener() {
+        findViewById(R.id.record_btn).setOnClickListener(new View.OnClickListener() {
             TrackRecorder recorder;
             @Override
             public void onClick(View view) {
