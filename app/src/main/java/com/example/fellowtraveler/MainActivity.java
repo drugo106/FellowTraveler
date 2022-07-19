@@ -237,7 +237,7 @@ public class MainActivity extends AppCompatActivity {
     private TrackRecorder recordTrack(TrackRecorder recorder) throws ExecutionException, InterruptedException {
         if(recorder == null){
             rec.setVisibility(View.VISIBLE);
-            recorder = new TrackRecorder(map,mLocationOverlay,getNameLocation(mLocationOverlay.getMyLocation()));
+            recorder = new TrackRecorder(this,map,mLocationOverlay,getNameLocation(mLocationOverlay.getMyLocation()));
             recorder.start();
         }else{
             rec.setVisibility(View.INVISIBLE);

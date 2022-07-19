@@ -2,6 +2,11 @@ package com.example.fellowtraveler;
 
 
 
+import android.graphics.ImageDecoder;
+import android.os.Build;
+
+import androidx.annotation.RequiresApi;
+
 import org.osmdroid.util.GeoPoint;
 import org.osmdroid.views.MapView;
 import org.osmdroid.views.overlay.Polyline;
@@ -9,10 +14,18 @@ import org.osmdroid.views.overlay.mylocation.MyLocationNewOverlay;
 import org.w3c.dom.Document;
 import org.xml.sax.InputSource;
 
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.FileWriter;
+import java.io.IOException;
 import java.io.StringReader;
 import java.io.StringWriter;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.security.Timestamp;
 import java.text.SimpleDateFormat;
+import java.util.Date;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
 
@@ -27,18 +40,22 @@ import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamResult;
 
 public class TrackRecorder extends Thread{
+    private MainActivity context;
     private MapView map;
     private MyLocationNewOverlay mLocation;
     public Polyline track;
     private boolean stay;
     private String gpxStr = "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?> <gpx version=\"1.1\" xmlns=\"http://www.topografix.com/GPX/1/1\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xsi:schemaLocation=\"http://www.topografix.com/GPX/1/1 http://www.topografix.com/GPX/1/1/gpx.xsd\" xmlns:oa=\"http://www.outdooractive.com/GPX/Extensions/1\">";
+    private String nameTrk;
 
 
-    public TrackRecorder(MapView m, MyLocationNewOverlay l, String nameTrk){
+    public TrackRecorder(MainActivity c, MapView m, MyLocationNewOverlay l, String nt){
+        context = c;
         map = m;
         mLocation = l;
         track = new Polyline(map);
         stay = true;
+        nameTrk = nt;
         gpxStr += "<metadata>"+
                 "</metadata>"+
                 "<trk>"+
@@ -58,12 +75,11 @@ public class TrackRecorder extends Thread{
                 //System.out.println(points.size());
                 GeoPoint myLocation = mLocation.getMyLocation();
                 if(points.size() > 0) {
-                    if (!points.get(points.size() - 1).equals(new GeoPoint(mLocation.getMyLocation()))) {
+                    if (!points.get(points.size() - 1).equals(new GeoPoint(mLocation.getMyLocation())))
                         track.addPoint(myLocation);
-                    }
-                }else {
+                }else
                     track.addPoint(myLocation);
-                }
+
                 try {
                     String timeStamp = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(new java.util.Date());
                     timeStamp = timeStamp.replace(" ","T");
@@ -88,11 +104,8 @@ public class TrackRecorder extends Thread{
         }
         gpxStr+="</trkseg></trk></gpx>";
         Document gpx = convertStringToXMLDocument(gpxStr);
-        try {
-            printDocument(gpx);
-        } catch (TransformerException e) {
-            e.printStackTrace();
-        }
+        printDocument(gpx);
+        saveTrack(gpx);
     }
 
     private Document convertStringToXMLDocument(String xmlString)
@@ -116,16 +129,38 @@ public class TrackRecorder extends Thread{
         return null;
     }
 
-    private void printDocument(Document doc) throws TransformerException {
-        Transformer transformer = TransformerFactory.newInstance().newTransformer();
-        transformer.setOutputProperty(OutputKeys.INDENT, "yes");
-        transformer.setOutputProperty("{http://xml.apache.org/xslt}indent-amount", "2");
-        // initialize StreamResult with File object to save to file
-        StreamResult result = new StreamResult(new StringWriter());
-        DOMSource source = new DOMSource(doc);
-        transformer.transform(source, result);
-        String xmlString = result.getWriter().toString();
-        System.out.println(xmlString);
+    private void printDocument(Document doc){
+        try {
+            Transformer transformer = TransformerFactory.newInstance().newTransformer();
+            transformer.setOutputProperty(OutputKeys.INDENT, "yes");
+            transformer.setOutputProperty("{http://xml.apache.org/xslt}indent-amount", "2");
+            // initialize StreamResult with File object to save to file
+            StreamResult result = new StreamResult(new StringWriter());
+            DOMSource source = new DOMSource(doc);
+            transformer.transform(source, result);
+            String xmlString = result.getWriter().toString();
+            System.out.println(xmlString);
+        }catch(TransformerException e){
+            e.printStackTrace();
+        }
+    }
+
+    public void saveTrack(Document doc){
+        try {
+            File path = context.getExternalFilesDir(null);
+            path.mkdirs();
+            File file = new File(path,  System.currentTimeMillis()+".gpx");
+            file.createNewFile();
+            DOMSource source = new DOMSource(doc);
+            FileOutputStream output = new FileOutputStream(file);
+            StreamResult result = new StreamResult(output);
+
+            TransformerFactory transformerFactory = TransformerFactory.newInstance();
+            Transformer transformer = transformerFactory.newTransformer();
+            transformer.transform(source, result);
+        }catch(IOException | TransformerException e){
+            e.printStackTrace();
+        }
     }
 
     public void exit() {
