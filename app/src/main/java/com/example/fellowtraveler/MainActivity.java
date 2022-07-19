@@ -151,9 +151,13 @@ public class MainActivity extends AppCompatActivity {
             TrackRecorder recorder;
             @Override
             public void onClick(View view) {
-                followMyLocation();
-                recorder = recordTrack(recorder);
-                isRecording = !isRecording;
+                try {
+                    followMyLocation();
+                    recorder = recordTrack(recorder);
+                    isRecording = !isRecording;
+                } catch (ExecutionException | InterruptedException e) {
+                    e.printStackTrace();
+                }
             }
         });
 
@@ -230,10 +234,10 @@ public class MainActivity extends AppCompatActivity {
 
     }
 
-    private TrackRecorder recordTrack(TrackRecorder recorder){
+    private TrackRecorder recordTrack(TrackRecorder recorder) throws ExecutionException, InterruptedException {
         if(recorder == null){
             rec.setVisibility(View.VISIBLE);
-            recorder = new TrackRecorder(map,mLocationOverlay);
+            recorder = new TrackRecorder(map,mLocationOverlay,getNameLocation(mLocationOverlay.getMyLocation()));
             recorder.start();
         }else{
             rec.setVisibility(View.INVISIBLE);
@@ -257,6 +261,10 @@ public class MainActivity extends AppCompatActivity {
                 + "&Elevation_Units=METERS&Source_Layer=-1&Elevation_Only=true";*/
         String url = "https://api.opentopodata.org/v1/eudem25m?locations="+latitude+","+longitude;
         return new RetrieveElevationTask().execute(latitude,longitude).get();
+    }
+
+    private String getNameLocation(GeoPoint g) throws ExecutionException, InterruptedException {
+        return new RetriveNameLocationTask().execute(g.getLatitude(),g.getLongitude()).get();
     }
 
     private void touchOverlay() {

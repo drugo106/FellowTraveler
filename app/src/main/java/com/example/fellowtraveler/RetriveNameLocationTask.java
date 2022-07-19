@@ -6,6 +6,7 @@ import com.google.firebase.crashlytics.buildtools.reloc.org.apache.commons.io.IO
 
 import org.json.JSONObject;
 
+
 import java.io.BufferedInputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -13,32 +14,29 @@ import java.net.HttpURLConnection;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
 
-public class RetrieveElevationTask extends AsyncTask<Double, Void, String> {
+
+
+public class RetriveNameLocationTask extends AsyncTask<Double, Void, String> {
 
     private static double oldLat = -1000000.,oldLong = -1000000.;
     private static String result = "No Data";
 
     @Override
     protected String doInBackground(Double... coord) {
-        System.out.println(oldLat +" "+oldLong);
         if(oldLat != coord[0] || oldLong != coord[1]) {
             try {
-                URL url = new URL("https://api.opentopodata.org/v1/eudem25m?locations=" + coord[0] + "," + coord[1]);
+                URL url = new URL("https://nominatim.openstreetmap.org/reverse?format=json&lat="+coord[0]+"&lon="+coord[1]+"&zoom=18&addressdetails=1");
                 oldLat = coord[0];
                 oldLong = coord[1];
-                //System.out.println(url);
                 HttpURLConnection urlConnection = (HttpURLConnection) url.openConnection();
                 InputStream in = new BufferedInputStream(urlConnection.getInputStream());
-                String res = IOUtils.toString(in, StandardCharsets.UTF_8);
+                String res = IOUtils.toString(in, StandardCharsets.UTF_8);  //res is in xml format
                 JSONObject json = new JSONObject(res);
-                //System.out.println(res);
-                result = json.getJSONArray("results").getJSONObject(0).getString("elevation");
+                result = json.getString("display_name");
                 if(result.equals("null"))
-                    result = "No Data";
-                else
-                    result = (int) Math.round(Double.parseDouble(result)) +"";
+                    result = "New Track";
             } catch (IOException e) {
-                result = "No Connection";
+                result = "New Track";
                 e.printStackTrace();
             } catch (Exception e) {
                 e.printStackTrace();
@@ -47,6 +45,4 @@ public class RetrieveElevationTask extends AsyncTask<Double, Void, String> {
         System.out.println("cazzolone");
         return result;
     }
-
-
 }

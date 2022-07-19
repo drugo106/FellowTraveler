@@ -11,7 +11,10 @@ import org.xml.sax.InputSource;
 
 import java.io.StringReader;
 import java.io.StringWriter;
+import java.security.Timestamp;
+import java.text.SimpleDateFormat;
 import java.util.List;
+import java.util.concurrent.ExecutionException;
 
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
@@ -31,50 +34,50 @@ public class TrackRecorder extends Thread{
     private String gpxStr = "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?> <gpx version=\"1.1\" xmlns=\"http://www.topografix.com/GPX/1/1\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xsi:schemaLocation=\"http://www.topografix.com/GPX/1/1 http://www.topografix.com/GPX/1/1/gpx.xsd\" xmlns:oa=\"http://www.outdooractive.com/GPX/Extensions/1\">";
 
 
-    public TrackRecorder(MapView m, MyLocationNewOverlay l){
+    public TrackRecorder(MapView m, MyLocationNewOverlay l, String nameTrk){
         map = m;
         mLocation = l;
         track = new Polyline(map);
         stay = true;
+        gpxStr += "<metadata>"+
+                "</metadata>"+
+                "<trk>"+
+                "<name>"+nameTrk+"</name>"+
+                "<trkseg>";
     }
 
     @Override
     public void run() {
         int i =0;
         //convertStringToXMLDocument(xmlStr+"</gpx>");
-        gpxStr += "<metadata>"+
-                    "</metadata>"+
-                    "<trk>"+
-                        "<name>Example GPX Document</name>"+
-                            "<trkseg>";
-        System.out.println(gpxStr);
+
+
         while(stay){
             if(mLocation.getMyLocation() != null) {
                 List<GeoPoint> points = track.getActualPoints();
                 //System.out.println(points.size());
+                GeoPoint myLocation = mLocation.getMyLocation();
                 if(points.size() > 0) {
                     if (!points.get(points.size() - 1).equals(new GeoPoint(mLocation.getMyLocation()))) {
-                        track.addPoint(mLocation.getMyLocation());
+                        track.addPoint(myLocation);
                     }
                 }else {
-                    track.addPoint(mLocation.getMyLocation());
+                    track.addPoint(myLocation);
                 }
-                //track.addPoint(new GeoPoint(45.464664 + new Random().nextDouble() , 9.188540 + i));
-                track.getActualPoints().forEach((p)->{
-                    gpxStr+="<trkpt lat=\"0\" lon=\"0\">"+
-                                "<ele>4.46</ele>"+
-                                "<time>2009-10-17T18:37:26Z</time>"+
-                            "</trkpt>";
-                });
-                map.getOverlays().remove(track);
-                map.getOverlays().add(track);
-                gpxStr+="</trkseg></trk></gpx>";
-                Document gpx = convertStringToXMLDocument(gpxStr);
                 try {
-                    printDocument(gpx);
-                } catch (TransformerException e) {
+                    String timeStamp = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(new java.util.Date());
+                    timeStamp = timeStamp.replace(" ","T");
+                    gpxStr+="<trkpt lat=\""+myLocation.getLatitude()+"\" lon=\""+myLocation.getLongitude()+"\">"+
+                            "<ele>"+new RetrieveElevationTask().execute(myLocation.getLatitude(),myLocation.getLongitude()).get()+"</ele>"+
+                            "<time>"+timeStamp+"</time>"+
+                            "</trkpt>";
+                } catch (ExecutionException | InterruptedException e) {
                     e.printStackTrace();
                 }
+                //track.getActualPoints().forEach((p)->{System.out.println(p);});
+                map.getOverlays().remove(track);
+                map.getOverlays().add(track);
+
                 try {
                     sleep(1000);
                 } catch (InterruptedException e) {
@@ -83,7 +86,13 @@ public class TrackRecorder extends Thread{
             }
             i++;
         }
-
+        gpxStr+="</trkseg></trk></gpx>";
+        Document gpx = convertStringToXMLDocument(gpxStr);
+        try {
+            printDocument(gpx);
+        } catch (TransformerException e) {
+            e.printStackTrace();
+        }
     }
 
     private Document convertStringToXMLDocument(String xmlString)
