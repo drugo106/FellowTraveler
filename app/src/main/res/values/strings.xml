@@ -1,3 +1,13 @@
 <resources>
     <string name="app_name">FellowTraveler</string>
+    <string name="title_activity_record_track">RecordTrackActivity</string>
+
+    <string-array name="sport_array">
+        <item>Run</item>
+        <item>Trek</item>
+        <item>MTB</item>
+    </string-array>
+
+
+
 </resources>

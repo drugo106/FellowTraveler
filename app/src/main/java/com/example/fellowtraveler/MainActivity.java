@@ -3,6 +3,9 @@ package com.example.fellowtraveler;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
+import androidx.navigation.NavController;
+import androidx.navigation.Navigation;
+import androidx.navigation.ui.AppBarConfiguration;
 
 import android.Manifest;
 import android.content.Context;
@@ -18,8 +21,14 @@ import android.util.DisplayMetrics;
 import android.util.Log;
 import android.view.MotionEvent;
 import android.view.View;
+import android.widget.AdapterView;
+import android.widget.ArrayAdapter;
+import android.widget.Spinner;
 import android.widget.TextView;
+import android.widget.Toast;
 
+
+import com.google.android.material.navigation.NavigationBarView;
 
 import org.osmdroid.api.IMapController;
 import org.osmdroid.config.Configuration;
@@ -44,7 +53,7 @@ import org.osmdroid.views.overlay.mylocation.MyLocationNewOverlay;
 import java.util.ArrayList;
 import java.util.concurrent.ExecutionException;
 
-public class MainActivity extends AppCompatActivity {
+public class MainActivity extends AppCompatActivity implements AdapterView.OnItemSelectedListener {
 
     private MapView map;
     private IMapController mapController;
@@ -89,6 +98,17 @@ public class MainActivity extends AppCompatActivity {
 
             }
         }
+
+        Spinner spinner = (Spinner) findViewById(R.id.sport_spinner);
+        // Create an ArrayAdapter using the string array and a default spinner layout
+        ArrayAdapter<CharSequence> adapter = ArrayAdapter.createFromResource(this,
+                R.array.sport_array, android.R.layout.simple_spinner_item);
+        // Specify the layout to use when the list of choices appears
+        adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+        // Apply the adapter to the spinner
+        spinner.setAdapter(adapter);
+
+
 
         rec = findViewById(R.id.rec);
         logger = findViewById(R.id.log);
@@ -173,7 +193,6 @@ public class MainActivity extends AppCompatActivity {
                 }
                 return false;
             }
-
             @Override
             public boolean onZoom(ZoomEvent event) {
                 return false;
@@ -342,6 +361,8 @@ public class MainActivity extends AppCompatActivity {
         return mLocationListener;
     }
 
+
+
     public void onResume() {
         super.onResume();
         //this will refresh the osmdroid configuration on resuming.
@@ -398,6 +419,19 @@ public class MainActivity extends AppCompatActivity {
             Log.v(TAG, "Permission: " + permissions[0] + "was " + grantResults[0]);
             //resume tasks needing this permission
         }
+    }
+
+    // for Sport Spinner
+    @Override
+    public void onItemSelected(AdapterView<?> adapterView, View view, int position, long l) {
+        String text = adapterView.getItemAtPosition(position).toString();
+        Toast.makeText(adapterView.getContext(),text,Toast.LENGTH_SHORT).show();
+    }
+
+    // for Sport Spinner
+    @Override
+    public void onNothingSelected(AdapterView<?> adapterView) {
+
     }
 
     /*private void tileProvider() {
