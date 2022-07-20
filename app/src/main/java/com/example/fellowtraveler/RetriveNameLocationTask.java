@@ -19,7 +19,8 @@ import java.nio.charset.StandardCharsets;
 public class RetriveNameLocationTask extends AsyncTask<Double, Void, String> {
 
     private static double oldLat = -1000000.,oldLong = -1000000.;
-    private static String result = "No Data";
+    private static String result = "New Track";
+    private static String[] keys = {"quarter","suburb","town","municipality","city","country","display_name"};
 
     @Override
     protected String doInBackground(Double... coord) {
@@ -32,9 +33,13 @@ public class RetriveNameLocationTask extends AsyncTask<Double, Void, String> {
                 InputStream in = new BufferedInputStream(urlConnection.getInputStream());
                 String res = IOUtils.toString(in, StandardCharsets.UTF_8);  //res is in xml format
                 JSONObject json = new JSONObject(res);
-                result = json.getString("display_name");
-                if(result.equals("null"))
-                    result = "New Track";
+                JSONObject address = json.getJSONObject("address");
+                for(String k : keys){
+                    if(address.has(k)) {
+                        result = address.getString(k);
+                        break;
+                    }
+                }
             } catch (IOException e) {
                 result = "New Track";
                 e.printStackTrace();

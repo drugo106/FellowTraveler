@@ -40,7 +40,7 @@ import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamResult;
 
 public class TrackRecorder extends Thread{
-    private MainActivity context;
+    private File pathToSave;
     private MapView map;
     private MyLocationNewOverlay mLocation;
     public Polyline track;
@@ -49,8 +49,8 @@ public class TrackRecorder extends Thread{
     private String nameTrk;
 
 
-    public TrackRecorder(MainActivity c, MapView m, MyLocationNewOverlay l, String nt){
-        context = c;
+    public TrackRecorder(File p, MapView m, MyLocationNewOverlay l, String nt){
+        pathToSave = p;
         map = m;
         mLocation = l;
         track = new Polyline(map);
@@ -66,9 +66,6 @@ public class TrackRecorder extends Thread{
     @Override
     public void run() {
         int i =0;
-        //convertStringToXMLDocument(xmlStr+"</gpx>");
-
-
         while(stay){
             if(mLocation.getMyLocation() != null) {
                 List<GeoPoint> points = track.getActualPoints();
@@ -95,7 +92,7 @@ public class TrackRecorder extends Thread{
                 map.getOverlays().add(track);
 
                 try {
-                    sleep(1000);
+                    sleep(5000);
                 } catch (InterruptedException e) {
                     e.printStackTrace();
                 }
@@ -147,9 +144,8 @@ public class TrackRecorder extends Thread{
 
     public void saveTrack(Document doc){
         try {
-            File path = context.getExternalFilesDir(null);
-            path.mkdirs();
-            File file = new File(path,  System.currentTimeMillis()+".gpx");
+            pathToSave.mkdirs();
+            File file = new File(pathToSave,  System.currentTimeMillis()+"_"+nameTrk+".gpx");
             file.createNewFile();
             DOMSource source = new DOMSource(doc);
             FileOutputStream output = new FileOutputStream(file);
