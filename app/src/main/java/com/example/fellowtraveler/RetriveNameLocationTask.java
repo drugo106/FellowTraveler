@@ -47,7 +47,6 @@ public class RetriveNameLocationTask extends AsyncTask<Double, Void, String> {
                 e.printStackTrace();
             }
         }
-        System.out.println("cazzolone");
         return result;
     }
 }

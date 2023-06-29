@@ -53,7 +53,9 @@ public class TrackRecorder extends Thread{
         pathToSave = p;
         map = m;
         mLocation = l;
-        track = new Polyline(map);
+        track = new Polyline();
+        map.getOverlays().add(track);
+
         stay = true;
         nameTrk = nt;
         gpxStr += "<metadata>"+
@@ -69,7 +71,6 @@ public class TrackRecorder extends Thread{
         while(stay){
             if(mLocation.getMyLocation() != null) {
                 List<GeoPoint> points = track.getActualPoints();
-                //System.out.println(points.size());
                 GeoPoint myLocation = mLocation.getMyLocation();
                 if(points.size() > 0) {
                     if (!points.get(points.size() - 1).equals(new GeoPoint(mLocation.getMyLocation())))
@@ -90,7 +91,7 @@ public class TrackRecorder extends Thread{
                 //track.getActualPoints().forEach((p)->{System.out.println(p);});
                 map.getOverlays().remove(track);
                 map.getOverlays().add(track);
-
+                System.out.println("QUA");
                 try {
                     sleep(5000);
                 } catch (InterruptedException e) {
@@ -147,6 +148,9 @@ public class TrackRecorder extends Thread{
             pathToSave.mkdirs();
             File file = new File(pathToSave,  System.currentTimeMillis()+"_"+nameTrk+".gpx");
             file.createNewFile();
+            File[] files = new File(String.valueOf(pathToSave)).listFiles();
+            for(File f: files)
+                System.out.println(f.getName());
             DOMSource source = new DOMSource(doc);
             FileOutputStream output = new FileOutputStream(file);
             StreamResult result = new StreamResult(output);

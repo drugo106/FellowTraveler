@@ -3,16 +3,12 @@ package com.example.fellowtraveler;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
-import androidx.navigation.NavController;
-import androidx.navigation.Navigation;
-import androidx.navigation.ui.AppBarConfiguration;
 
 import android.Manifest;
 import android.content.Context;
 import android.content.pm.PackageManager;
 import android.graphics.Canvas;
 
-import android.location.Location;
 import android.location.LocationListener;
 import android.os.Build;
 import android.os.Bundle;
@@ -28,30 +24,52 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 
-import com.google.android.material.navigation.NavigationBarView;
-
 import org.osmdroid.api.IMapController;
 import org.osmdroid.config.Configuration;
 import org.osmdroid.events.DelayedMapListener;
 import org.osmdroid.events.MapListener;
 import org.osmdroid.events.ScrollEvent;
 import org.osmdroid.events.ZoomEvent;
+import org.osmdroid.tileprovider.constants.OpenStreetMapTileProviderConstants;
+import org.osmdroid.tileprovider.modules.MapTileDownloader;
 import org.osmdroid.tileprovider.tilesource.ITileSource;
+import org.osmdroid.tileprovider.tilesource.TileSourceFactory;
 import org.osmdroid.tileprovider.tilesource.XYTileSource;
 import org.osmdroid.util.GeoPoint;
 import org.osmdroid.views.MapView;
 import org.osmdroid.views.Projection;
 import org.osmdroid.views.overlay.ItemizedIconOverlay;
 import org.osmdroid.views.overlay.Marker;
+import org.osmdroid.views.overlay.MinimapOverlay;
 import org.osmdroid.views.overlay.Overlay;
 import org.osmdroid.views.overlay.OverlayItem;
+import org.osmdroid.views.overlay.Polyline;
 import org.osmdroid.views.overlay.ScaleBarOverlay;
 import org.osmdroid.views.overlay.mylocation.GpsMyLocationProvider;
 import org.osmdroid.views.overlay.mylocation.MyLocationNewOverlay;
+import org.w3c.dom.Document;
+import org.w3c.dom.Element;
+import org.w3c.dom.Node;
+import org.w3c.dom.NodeList;
+import org.xml.sax.SAXException;
 
 
+import java.io.File;
+import java.io.IOException;
+import java.io.StringWriter;
 import java.util.ArrayList;
 import java.util.concurrent.ExecutionException;
+
+import javax.xml.XMLConstants;
+import javax.xml.parsers.DocumentBuilder;
+import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.parsers.ParserConfigurationException;
+import javax.xml.transform.OutputKeys;
+import javax.xml.transform.Transformer;
+import javax.xml.transform.TransformerException;
+import javax.xml.transform.TransformerFactory;
+import javax.xml.transform.dom.DOMSource;
+import javax.xml.transform.stream.StreamResult;
 
 public class MainActivity extends AppCompatActivity implements AdapterView.OnItemSelectedListener {
 
@@ -64,13 +82,16 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
     private TextView pos;
     private LocationListener mLocationListener;
     private DelayedMapListener mapListener;
+    private DisplayMetrics dm;
+    private MinimapOverlay mMinimapOverlay;
+
     private boolean isRecording = false;
 
     private static final String TAG = "OsmActivity";
     private static final int PERMISSION_REQUEST_CODE = 1;
     private ScaleBarOverlay mScaleBarOverlay;
 
-
+    private File pathToSave;
 
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
@@ -82,6 +103,9 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
         //load/initialize the osmdroid configuration, this can be done
         Context ctx = getApplicationContext();
         Configuration.getInstance().load(ctx, PreferenceManager.getDefaultSharedPreferences(ctx));
+        Configuration.getInstance().setUserAgentValue(this.getPackageName());
+        Configuration.getInstance().setDebugMode(false);
+
         //setting this before the layout is inflated is a good idea
         //it 'should' ensure that the map has a writable location for the map cache, even without permissions
         //if no tiles are displayed, you can try overriding the cache path using Configuration.getInstance().setCachePath
@@ -130,8 +154,9 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
         mapController.setCenter(startPoint);
         mapScale();
         setMarkerOnStartPosition(startPoint);
-        touchOverlay();
-        mLocationListener = getLocationListener();
+        //touchOverlay();
+        //mLocationListener = getLocationListener();
+
 
         new Thread(){
             public void run() {
@@ -199,14 +224,18 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
             }
         },200));
 
+        loadTracks();
     }
 
     private void setMap() {
-        String[] tileURLs = {"http://a.tile.thunderforest.com/cycle/",
+        // Open Cycle Map is common that doesn't download tiles and i think that is the cause that make some thread (RetriveElevationTask)
+        //crash in C level (tombsone)
+
+        /*String[] tileURLs = {"http://a.tile.thunderforest.com/cycle/",
                 "http://b.tile.thunderforest.com/cycle/",
                 "http://c.tile.thunderforest.com/cycle/"};
 
-        ITileSource OCM =
+          ITileSource OCM =
                 new XYTileSource("Open Cycle Map",
                         0,
                         19,
@@ -214,8 +243,24 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
                         ".png?apikey=774e562d81c94d36bf6f489e0f0a33ec",
                         tileURLs,
                         "from open cycle map");
-        map.setTileSource(OCM);
+        map.setTileSource(OCM);*/
+
+        String[] tileURLs = {"https://a.tile-cyclosm.openstreetmap.fr/cyclosm/",
+                "https://b.tile-cyclosm.openstreetmap.fr/cyclosm/",
+                "https://c.tile-cyclosm.openstreetmap.fr/cyclosm/"};
+
+        ITileSource CyclOSM =
+                new XYTileSource("Open Cycle Map",
+                                        0,
+                                        20,
+                                        512,
+                        ".png",
+                        tileURLs);
+        map.setTileSource(CyclOSM);
+
         //map.setTileSource(TileSourceFactory.MAPNIK);
+        //map.setTileSource(TileSourceFactory.PUBLIC_TRANSPORT);
+        System.out.println("@@@@@@@@@@@@@@@@@@@@@@@@@ "+Configuration.getInstance().getUserAgentHttpHeader());
     }
 
     private void setMarkerOnStartPosition(GeoPoint startPoint) {
@@ -228,9 +273,7 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
     public void myLocation(){
         mLocationOverlay = new MyLocationNewOverlay(new GpsMyLocationProvider(getApplicationContext()),map);
         mLocationOverlay.enableMyLocation();
-        //mLocationOverlay.setEnableAutoStop(false);
         map.getOverlays().add(mLocationOverlay);
-        //mLocationOverlay.enableFollowLocation();
     }
 
     public void mapScale(){
@@ -250,7 +293,50 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
             mLocationOverlay.enableFollowLocation();
             mapController.zoomIn(15L);
         }
+    }
 
+    private void loadTracks(){
+
+        pathToSave = this.getExternalFilesDir(null);
+        pathToSave.mkdirs();
+        File[] files = new File(String.valueOf(pathToSave)).listFiles();
+        DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
+        for(File f: files) {
+            Polyline track = new Polyline(map);
+            new Thread() {
+                public void run() {
+                    try {
+                        System.out.println(f);
+                        // parse XML file
+                        DocumentBuilder db = dbf.newDocumentBuilder();
+                        Document doc = db.parse(f);
+                        doc.getDocumentElement().normalize();
+                        NodeList list = doc.getElementsByTagName("trkpt");
+
+                        for (int i = 0; i < list.getLength(); i++) {
+                            Node node = list.item(i);
+                            if (node.getNodeType() == Node.ELEMENT_NODE) {
+                                Element element = (Element) node;
+                                String e = element.getElementsByTagName("ele").item(0).getTextContent();
+                                String t = element.getElementsByTagName("time").item(0).getTextContent();
+
+                                Double lat = Double.parseDouble(((Element) node).getAttribute("lat"));
+                                Double lon = Double.parseDouble(((Element) node).getAttribute("lon"));
+                                track.addPoint(new GeoPoint(lat, lon));
+                            }
+                        }
+                        map.getOverlays().add(track);
+
+                    } catch (ParserConfigurationException e) {
+                        e.printStackTrace();
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    } catch (SAXException e) {
+                        e.printStackTrace();
+                    }
+                }
+            }.start();
+        }
     }
 
     private TrackRecorder recordTrack(TrackRecorder recorder) throws ExecutionException, InterruptedException {
@@ -283,7 +369,9 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
     }
 
     private String getNameLocation(GeoPoint g) throws ExecutionException, InterruptedException {
-        return new RetriveNameLocationTask().execute(g.getLatitude(),g.getLongitude()).get();
+        String name = new RetriveNameLocationTask().execute(g.getLatitude(),g.getLongitude()).get();
+        //String name = "ciao";
+        return name;
     }
 
     private void touchOverlay() {
@@ -320,48 +408,6 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
         };
         map.getOverlays().add(touchOverlay);
     }
-
-    public LocationListener getLocationListener() {
-        LocationListener mLocationListener = new LocationListener() {
-            @Override
-            public void onLocationChanged(final Location location) {
-                Log.d(TAG, "onLocationChanged: Provider = " + location.getProvider());
-                Log.d(TAG, "onLocationChanged: accuracy = " + location.getAccuracy());
-                Log.d(TAG,
-                        "onLocationChanged: lon = " + location.getLongitude() + " lat = " + location.getLatitude()
-                                + " alt = " + location.getAltitude());
-                Bundle extras = location.getExtras();
-                for (String s : extras.keySet()) {
-                    Log.d(TAG, "onLocationChanged: " + s + " = " + extras.get(s));
-                }
-                mapController.setCenter(new GeoPoint(location));
-                mapController.setZoom(15.);
-                logger.setText(String.valueOf((location.getAltitude())));
-            }
-
-            @Override
-            public void onStatusChanged(String provider, int status, Bundle extras) {
-                Log.d(TAG, "onStatusChanged: " + provider + " status = " + status);
-                extras.keySet();
-                for (String s : extras.keySet()) {
-                    Log.d(TAG, "onStatusChanged: " + s + " = " + extras.get(s));
-                }
-            }
-
-            @Override
-            public void onProviderEnabled(String provider) {
-                Log.d(TAG, "onProviderEnabled: " + provider);
-            }
-
-            @Override
-            public void onProviderDisabled(String provider) {
-                Log.d(TAG, "onProviderDisabled: " + provider);
-            }
-        };
-        return mLocationListener;
-    }
-
-
 
     public void onResume() {
         super.onResume();
@@ -433,6 +479,47 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
     public void onNothingSelected(AdapterView<?> adapterView) {
 
     }
+
+    /*public LocationListener getLocationListener() {
+        LocationListener mLocationListener = new LocationListener() {
+            @Override
+            public void onLocationChanged(final Location location) {
+                Log.d(TAG, "onLocationChanged: Provider = " + location.getProvider());
+                Log.d(TAG, "onLocationChanged: accuracy = " + location.getAccuracy());
+                Log.d(TAG,
+                        "onLocationChanged: lon = " + location.getLongitude() + " lat = " + location.getLatitude()
+                                + " alt = " + location.getAltitude());
+                Bundle extras = location.getExtras();
+                for (String s : extras.keySet()) {
+                    Log.d(TAG, "onLocationChanged: " + s + " = " + extras.get(s));
+                }
+                mapController.setCenter(new GeoPoint(location));
+                mapController.setZoom(15.);
+                logger.setText(String.valueOf((location.getAltitude())));
+            }
+
+            @Override
+            public void onStatusChanged(String provider, int status, Bundle extras) {
+                Log.d(TAG, "onStatusChanged: " + provider + " status = " + status);
+                extras.keySet();
+                for (String s : extras.keySet()) {
+                    Log.d(TAG, "onStatusChanged: " + s + " = " + extras.get(s));
+                }
+            }
+
+            @Override
+            public void onProviderEnabled(String provider) {
+                Log.d(TAG, "onProviderEnabled: " + provider);
+            }
+
+            @Override
+            public void onProviderDisabled(String provider) {
+                Log.d(TAG, "onProviderDisabled: " + provider);
+            }
+        };
+        return mLocationListener;
+    }*/
+
 
     /*private void tileProvider() {
         map.setTileSource(TileSourceFactory.USGS_TOPO);
