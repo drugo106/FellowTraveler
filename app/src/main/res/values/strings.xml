@@ -3,9 +3,10 @@
     <string name="title_activity_record_track">RecordTrackActivity</string>
 
     <string-array name="sport_array">
-        <item>Run</item>
-        <item>Trek</item>
-        <item>MTB</item>
+        <item>MAPNIK</item>
+        <item>CyclOSM</item>
+        <item>OCM</item>
+        <item>ORM</item>
     </string-array>
 
 

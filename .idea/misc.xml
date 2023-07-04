@@ -3,10 +3,14 @@
   <component name="DesignSurface">
     <option name="filePathToZoomLevelMap">
       <map>
+        <entry key="..\:/AndroidStudioProjects/FellowTraveler/app/src/main/res/drawable/ic_continue.xml" value="0.2585" />
+        <entry key="..\:/AndroidStudioProjects/FellowTraveler/app/src/main/res/drawable/marker_node.xml" value="0.2585" />
         <entry key="..\:/AndroidStudioProjects/FellowTraveler/app/src/main/res/drawable/target.xml" value="0.2265" />
         <entry key="..\:/AndroidStudioProjects/FellowTraveler/app/src/main/res/layout/activity_main.xml" value="0.24010416666666667" />
         <entry key="..\:/AndroidStudioProjects/FellowTraveler/app/src/main/res/layout/activity_record_track.xml" value="0.25416666666666665" />
+        <entry key="..\:/AndroidStudioProjects/FellowTraveler/app/src/main/res/menu/menu.xml" value="0.253125" />
         <entry key="..\:/AndroidStudioProjects/FellowTraveler/app/src/main/res/menu/record_track_menu.xml" value="0.25416666666666665" />
+        <entry key="..\:/AndroidStudioProjects/FellowTraveler/app/src/main/res/menu/search_location.xml" value="0.10520833333333333" />
       </map>
     </option>
   </component>

@@ -6,12 +6,16 @@ import androidx.core.app.ActivityCompat;
 
 import android.Manifest;
 import android.content.Context;
+import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.graphics.Canvas;
 
+import android.graphics.drawable.Drawable;
+import android.location.Address;
 import android.location.LocationListener;
 import android.os.Build;
 import android.os.Bundle;
+import android.os.StrictMode;
 import android.preference.PreferenceManager;
 import android.util.DisplayMetrics;
 import android.util.Log;
@@ -19,25 +23,29 @@ import android.view.MotionEvent;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
+import android.widget.CheckBox;
+import android.widget.CompoundButton;
+import android.widget.SearchView;
 import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
 
 
 import org.osmdroid.api.IMapController;
+import org.osmdroid.bonuspack.location.GeocoderNominatim;
+import org.osmdroid.bonuspack.routing.OSRMRoadManager;
+import org.osmdroid.bonuspack.routing.Road;
+import org.osmdroid.bonuspack.routing.RoadManager;
+import org.osmdroid.bonuspack.routing.RoadNode;
 import org.osmdroid.config.Configuration;
 import org.osmdroid.events.DelayedMapListener;
 import org.osmdroid.events.MapListener;
 import org.osmdroid.events.ScrollEvent;
 import org.osmdroid.events.ZoomEvent;
-import org.osmdroid.tileprovider.constants.OpenStreetMapTileProviderConstants;
-import org.osmdroid.tileprovider.modules.MapTileDownloader;
+import org.osmdroid.tileprovider.modules.SqlTileWriter;
 import org.osmdroid.tileprovider.tilesource.ITileSource;
-import org.osmdroid.tileprovider.tilesource.TileSourceFactory;
-import org.osmdroid.tileprovider.tilesource.XYTileSource;
 import org.osmdroid.util.GeoPoint;
 import org.osmdroid.views.MapView;
-import org.osmdroid.views.Projection;
 import org.osmdroid.views.overlay.ItemizedIconOverlay;
 import org.osmdroid.views.overlay.Marker;
 import org.osmdroid.views.overlay.MinimapOverlay;
@@ -45,6 +53,7 @@ import org.osmdroid.views.overlay.Overlay;
 import org.osmdroid.views.overlay.OverlayItem;
 import org.osmdroid.views.overlay.Polyline;
 import org.osmdroid.views.overlay.ScaleBarOverlay;
+import org.osmdroid.views.overlay.TilesOverlay;
 import org.osmdroid.views.overlay.mylocation.GpsMyLocationProvider;
 import org.osmdroid.views.overlay.mylocation.MyLocationNewOverlay;
 import org.w3c.dom.Document;
@@ -56,30 +65,30 @@ import org.xml.sax.SAXException;
 
 import java.io.File;
 import java.io.IOException;
-import java.io.StringWriter;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.ExecutionException;
 
-import javax.xml.XMLConstants;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
-import javax.xml.transform.OutputKeys;
-import javax.xml.transform.Transformer;
-import javax.xml.transform.TransformerException;
-import javax.xml.transform.TransformerFactory;
-import javax.xml.transform.dom.DOMSource;
-import javax.xml.transform.stream.StreamResult;
 
 public class MainActivity extends AppCompatActivity implements AdapterView.OnItemSelectedListener {
 
     private MapView map;
     private IMapController mapController;
     private MyLocationNewOverlay mLocationOverlay;
-    private ArrayList<OverlayItem> items;
     private TextView logger;
     private TextView rec;
     private TextView pos;
+    private CheckBox waymark;
+    private TilesOverlay waymarkLayer;
+    private SearchView searchView;
+    private Spinner spinner;
+    private Marker markerLocation;
+
     private LocationListener mLocationListener;
     private DelayedMapListener mapListener;
     private DisplayMetrics dm;
@@ -93,18 +102,25 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
 
     private File pathToSave;
 
+    private String USER_AGENT = Configuration.getInstance().getUserAgentValue();
+
+
+
+
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
         //handle permissions first, before map is created. not depicted here
 
-
         //load/initialize the osmdroid configuration, this can be done
         Context ctx = getApplicationContext();
         Configuration.getInstance().load(ctx, PreferenceManager.getDefaultSharedPreferences(ctx));
         Configuration.getInstance().setUserAgentValue(this.getPackageName());
-        Configuration.getInstance().setDebugMode(false);
+        Configuration.getInstance().setDebugMode(false  );
+        Configuration.getInstance().setUserAgentValue("MyOwnUserAgent/1.0");
+        StrictMode.ThreadPolicy policy = new StrictMode.ThreadPolicy.Builder().permitAll().build();
+        StrictMode.setThreadPolicy(policy);
 
         //setting this before the layout is inflated is a good idea
         //it 'should' ensure that the map has a writable location for the map cache, even without permissions
@@ -116,158 +132,93 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
 
         setContentView(R.layout.activity_main);
 
-
         if (Build.VERSION.SDK_INT >= 23) {
             if (isStoragePermissionGranted()) {
 
             }
         }
 
-        Spinner spinner = (Spinner) findViewById(R.id.sport_spinner);
-        // Create an ArrayAdapter using the string array and a default spinner layout
-        ArrayAdapter<CharSequence> adapter = ArrayAdapter.createFromResource(this,
-                R.array.sport_array, android.R.layout.simple_spinner_item);
-        // Specify the layout to use when the list of choices appears
-        adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
-        // Apply the adapter to the spinner
-        spinner.setAdapter(adapter);
-
-
-
+        // INIZIALIZE VIEWS
         rec = findViewById(R.id.rec);
         logger = findViewById(R.id.log);
         pos = findViewById(R.id.pos);
         map = findViewById(R.id.mapView);
+        waymark = findViewById(R.id.waymark_check);
+        waymarkLayer = MyMaps.waymarkOverlay(this);
+        searchView = (SearchView) findViewById(R.id.searchView);
+        spinner = (Spinner) findViewById(R.id.sport_spinner);
+        ArrayAdapter<CharSequence> adapter = ArrayAdapter.createFromResource(this,
+                R.array.sport_array, android.R.layout.simple_spinner_item);
+        adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+        spinner.setAdapter(adapter);
 
-        setMap();
-
+        //INIZIALIZE MAP
+        setMap(loadPreference("map"));
         //map.setBuiltInZoomControls(true);
         map.setMultiTouchControls(true);
         //map.addMapListener(new MyMapListener());
         mapController = map.getController();
         mapController.setZoom(15.);
         myLocation();
-
         GeoPoint startPoint = new GeoPoint(45.464664, 9.188540);
-
-        //logger.setText(new GpsMyLocationProvider(getApplicationContext()).getLastKnownLocation());
         mapController.setCenter(startPoint);
         mapScale();
-        setMarkerOnStartPosition(startPoint);
+        markerLocation = new Marker(map);
+
+        //setMarkerOnStartPosition(startPoint);
+
+        //SET SERVICES AND LISTENERS
+        setListeners();
+        startServices();
+
+        //DEBUG
         //touchOverlay();
-        //mLocationListener = getLocationListener();
+        getRoute();
+        //show my location + if is following
 
-
-        new Thread(){
-            public void run() {
-                while(true) {
-                    if(mLocationOverlay.getMyLocation() != null)
-                        runOnUiThread(new Runnable() {
-                            @Override
-                            public void run() {
-                                pos.setText(mLocationOverlay.getMyLocation().toString()+ " " + mLocationOverlay.isFollowLocationEnabled());
-                            }
-                        });
-                    try {
-                        sleep(1000);
-                    } catch (InterruptedException e) {
-                        e.printStackTrace();
-                    }
-                }
-            }
-        }.start();
-
-        findViewById(R.id.my_position_btn).setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                followMyLocation();
-                try {
-                    if(mLocationOverlay.getMyLocation()!=null)
-                        logger.setText(String.valueOf(getAltitude(mLocationOverlay.getMyLocation())));
-                } catch (ExecutionException e) {
-                    e.printStackTrace();
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
-                }
-            }
-        });
-
-        findViewById(R.id.record_btn).setOnClickListener(new View.OnClickListener() {
-            TrackRecorder recorder;
-            @Override
-            public void onClick(View view) {
-                try {
-                    followMyLocation();
-                    recorder = recordTrack(recorder);
-                    isRecording = !isRecording;
-                } catch (ExecutionException | InterruptedException e) {
-                    e.printStackTrace();
-                }
-            }
-        });
-
-        map.addMapListener(new DelayedMapListener (new MapListener() {
-            @Override
-            public boolean onScroll(ScrollEvent event) {
-                try {
-                    logger.setText(getAltitude((GeoPoint) map.getMapCenter()));
-                } catch (ExecutionException e) {
-                    e.printStackTrace();
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
-                }
-                return false;
-            }
-            @Override
-            public boolean onZoom(ZoomEvent event) {
-                return false;
-            }
-        },200));
 
         loadTracks();
+
     }
 
-    private void setMap() {
-        // Open Cycle Map is common that doesn't download tiles and i think that is the cause that make some thread (RetriveElevationTask)
-        //crash in C level (tombsone)
+    
 
-        /*String[] tileURLs = {"http://a.tile.thunderforest.com/cycle/",
-                "http://b.tile.thunderforest.com/cycle/",
-                "http://c.tile.thunderforest.com/cycle/"};
+    private GeoPoint reverseGeocoding(String query){
+        GeocoderNominatim geocoder = new GeocoderNominatim(USER_AGENT);
+        try {
+            List<Address> address = geocoder.getFromLocationName(query,1);
+            //System.out.println("@@@@@@@@@@@@@@@ " + a.getExtras().getCharSequence("display_name"));
+            if(address.size()>0)
+                return new GeoPoint(address.get(0).getLatitude(),address.get(0).getLongitude());
+            return null;
+        } catch (IOException e) {
+            e.printStackTrace();
+            return null;
+        }
 
-          ITileSource OCM =
-                new XYTileSource("Open Cycle Map",
-                        0,
-                        19,
-                        512,
-                        ".png?apikey=774e562d81c94d36bf6f489e0f0a33ec",
-                        tileURLs,
-                        "from open cycle map");
-        map.setTileSource(OCM);*/
+    }
 
-        String[] tileURLs = {"https://a.tile-cyclosm.openstreetmap.fr/cyclosm/",
-                "https://b.tile-cyclosm.openstreetmap.fr/cyclosm/",
-                "https://c.tile-cyclosm.openstreetmap.fr/cyclosm/"};
-
-        ITileSource CyclOSM =
-                new XYTileSource("Open Cycle Map",
-                                        0,
-                                        20,
-                                        512,
-                        ".png",
-                        tileURLs);
-        map.setTileSource(CyclOSM);
-
-        //map.setTileSource(TileSourceFactory.MAPNIK);
-        //map.setTileSource(TileSourceFactory.PUBLIC_TRANSPORT);
-        System.out.println("@@@@@@@@@@@@@@@@@@@@@@@@@ "+Configuration.getInstance().getUserAgentHttpHeader());
+    private void setMap(String name) {
+        //clear cache before change map
+        SqlTileWriter sqlTileWriter = new SqlTileWriter();
+        boolean b = sqlTileWriter.purgeCache();
+        sqlTileWriter.onDetach();
+        //cazzola style
+        try {
+            Class<?> c = Class.forName("com.example.fellowtraveler.MyMaps");
+            Method method = c.getDeclaredMethod(name);
+            map.setTileSource((ITileSource) method.invoke(null, null));
+        } catch (ClassNotFoundException | NoSuchMethodException | InvocationTargetException | IllegalAccessException e) {
+            e.printStackTrace();
+        }
+        savePreference("map",name);
     }
 
     private void setMarkerOnStartPosition(GeoPoint startPoint) {
-        Marker startMarker = new Marker(map);
-        startMarker.setPosition(startPoint);
-        startMarker.setAnchor(Marker.ANCHOR_CENTER, Marker.ANCHOR_BOTTOM);
-        map.getOverlays().add(startMarker);
+        Marker markerLocation = new Marker(map);
+        markerLocation.setPosition(startPoint);
+        markerLocation.setAnchor(Marker.ANCHOR_CENTER, Marker.ANCHOR_BOTTOM);
+        map.getOverlays().add(markerLocation);
     }
 
     public void myLocation(){
@@ -294,6 +245,70 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
             mapController.zoomIn(15L);
         }
     }
+
+    private TrackRecorder recordTrack(TrackRecorder recorder) throws ExecutionException, InterruptedException {
+        if(recorder == null){
+            rec.setVisibility(View.VISIBLE);
+            recorder = new TrackRecorder(this.getExternalFilesDir(null),map,mLocationOverlay,getNameLocation(mLocationOverlay.getMyLocation()));
+            recorder.start();
+        }else{
+            rec.setVisibility(View.INVISIBLE);
+            recorder.exit();
+            recorder = null;
+        }
+        return recorder;
+    }
+
+    private String getElevation(GeoPoint g) throws ExecutionException, InterruptedException {
+        return getElevation(g.getLatitude(),g.getLongitude());
+    }
+
+    private String getElevation(double latitude, double longitude) throws ExecutionException, InterruptedException {
+        // guarda qui: https://www.opentopodata.org/datasets/eudem/
+
+        /*String url = "http://gisdata.usgs.gov/"
+                + "xmlwebservices2/elevation_service.asmx/"
+                + "getElevation?X_Value=" + String.valueOf(longitude)
+                + "&Y_Value=" + String.valueOf(latitude)
+                + "&Elevation_Units=METERS&Source_Layer=-1&Elevation_Only=true";*/
+        String url = "https://api.opentopodata.org/v1/eudem25m?locations="+latitude+","+longitude;
+        return new RetrieveElevationTask().execute(latitude,longitude).get();
+    }
+
+    private String getNameLocation(GeoPoint g) throws ExecutionException, InterruptedException {
+        String name = new RetriveNameLocationTask().execute(g.getLatitude(),g.getLongitude()).get();
+        //String name = "ciao";
+        return name;
+    }
+
+
+
+    private void getRoute(){
+        OSRMRoadManager roadManager = new OSRMRoadManager(this, USER_AGENT);
+        roadManager.setMean(OSRMRoadManager.MEAN_BY_BIKE);
+        ArrayList<GeoPoint> waypoints = new ArrayList<GeoPoint>();
+        waypoints.add( new GeoPoint(45.4654219, 9.1859243));
+        waypoints.add(new GeoPoint(45.634039, 9.276861));
+        Road road = roadManager.getRoad(waypoints);
+        Polyline roadOverlay = RoadManager.buildRoadOverlay(road);
+        map.getOverlays().add(roadOverlay);
+        map.invalidate();
+
+        Drawable nodeIcon = getResources().getDrawable(R.drawable.marker_node);
+        for (int i=1; i<road.mNodes.size()-1; i++){
+            RoadNode node = road.mNodes.get(i);
+            Marker nodeMarker = new Marker(map);
+            nodeMarker.setSnippet(node.mInstructions);
+            nodeMarker.setSubDescription(Road.getLengthDurationText(this, node.mLength, node.mDuration));
+            nodeMarker.setPosition(node.mLocation);
+            nodeMarker.setIcon(nodeIcon);
+            nodeMarker.setAnchor(Marker.ANCHOR_CENTER, Marker.ANCHOR_CENTER);
+            nodeMarker.setTitle("Step "+i);
+            map.getOverlays().add(nodeMarker);
+        }
+
+    }
+
 
     private void loadTracks(){
 
@@ -327,51 +342,12 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
                         }
                         map.getOverlays().add(track);
 
-                    } catch (ParserConfigurationException e) {
-                        e.printStackTrace();
-                    } catch (IOException e) {
-                        e.printStackTrace();
-                    } catch (SAXException e) {
+                    } catch (ParserConfigurationException | IOException | SAXException e) {
                         e.printStackTrace();
                     }
                 }
             }.start();
         }
-    }
-
-    private TrackRecorder recordTrack(TrackRecorder recorder) throws ExecutionException, InterruptedException {
-        if(recorder == null){
-            rec.setVisibility(View.VISIBLE);
-            recorder = new TrackRecorder(this.getExternalFilesDir(null),map,mLocationOverlay,getNameLocation(mLocationOverlay.getMyLocation()));
-            recorder.start();
-        }else{
-            rec.setVisibility(View.INVISIBLE);
-            recorder.exit();
-            recorder = null;
-        }
-        return recorder;
-    }
-
-    private String getAltitude(GeoPoint g) throws ExecutionException, InterruptedException {
-        return getAltitude(g.getLatitude(),g.getLongitude());
-    }
-
-    private String getAltitude(double latitude, double longitude) throws ExecutionException, InterruptedException {
-        // guarda qui: https://www.opentopodata.org/datasets/eudem/
-
-        /*String url = "http://gisdata.usgs.gov/"
-                + "xmlwebservices2/elevation_service.asmx/"
-                + "getElevation?X_Value=" + String.valueOf(longitude)
-                + "&Y_Value=" + String.valueOf(latitude)
-                + "&Elevation_Units=METERS&Source_Layer=-1&Elevation_Only=true";*/
-        String url = "https://api.opentopodata.org/v1/eudem25m?locations="+latitude+","+longitude;
-        return new RetrieveElevationTask().execute(latitude,longitude).get();
-    }
-
-    private String getNameLocation(GeoPoint g) throws ExecutionException, InterruptedException {
-        String name = new RetriveNameLocationTask().execute(g.getLatitude(),g.getLongitude()).get();
-        //String name = "ciao";
-        return name;
     }
 
     private void touchOverlay() {
@@ -384,8 +360,12 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
             @Override
             public boolean onSingleTapConfirmed(final MotionEvent e, final MapView mapView) {
 
+                if(markerLocation!=null) {
+                    map.getOverlays().remove(markerLocation);
+                    map.invalidate();
+                }
                 //final Drawable marker = AppCompatResources.getDrawable(this,R.drawable.ic_menu_mylocation);
-                Projection proj = mapView.getProjection();
+                /*Projection proj = mapView.getProjection();
                 GeoPoint loc = (GeoPoint) proj.fromPixels((int)e.getX(), (int)e.getY());
                 ArrayList<OverlayItem> overlayArray = new ArrayList<OverlayItem>();
                 OverlayItem mapItem = new OverlayItem("", "", new GeoPoint(loc.getLatitude(), loc.getLongitude()));
@@ -401,13 +381,140 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
                     mapView.invalidate();
                     anotherItemizedIconOverlay = new ItemizedIconOverlay<OverlayItem>(getApplicationContext(), overlayArray,null);
                     mapView.getOverlays().add(anotherItemizedIconOverlay);
-                }
+                }*/
                 //      dlgThread();
                 return true;
             }
         };
         map.getOverlays().add(touchOverlay);
     }
+
+    public void savePreference(String key, String value){
+        SharedPreferences sharedPreferences = getSharedPreferences("MySharedPref",MODE_PRIVATE);
+        SharedPreferences.Editor myEdit = sharedPreferences.edit();
+        myEdit.putString(key,value);
+        myEdit.apply();
+    }
+
+    public String loadPreference(String key){
+        SharedPreferences sh = getSharedPreferences("MySharedPref", MODE_PRIVATE);
+        String s1 = sh.getString(key, "CyclOSM");
+        return s1;
+    }
+
+    private void startServices(){
+        new Thread(){
+            public void run() {
+                while(true) {
+                    if(mLocationOverlay.getMyLocation() != null)
+                        runOnUiThread(new Runnable() {
+                            @Override
+                            public void run() {
+                                pos.setText(mLocationOverlay.getMyLocation().toString()+ " " + mLocationOverlay.isFollowLocationEnabled());
+                            }
+                        });
+                    try {
+                        sleep(1000);
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
+                    }
+                }
+            }
+        }.start();
+    }
+
+    private void setListeners(){
+        findViewById(R.id.my_position_btn).setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                followMyLocation();
+                try {
+                    if(mLocationOverlay.getMyLocation()!=null)
+                        logger.setText(String.valueOf(getElevation(mLocationOverlay.getMyLocation())));
+                } catch (ExecutionException | InterruptedException e) {
+                    e.printStackTrace();
+                }
+            }
+        });
+
+        //start and stop recording
+        findViewById(R.id.record_btn).setOnClickListener(new View.OnClickListener() {
+            TrackRecorder recorder;
+            @Override
+            public void onClick(View view) {
+                try {
+                    followMyLocation();
+                    recorder = recordTrack(recorder);
+                    isRecording = !isRecording;
+                } catch (ExecutionException | InterruptedException e) {
+                    e.printStackTrace();
+                }
+            }
+        });
+
+        //update elevation of center map
+        map.addMapListener(new DelayedMapListener (new MapListener() {
+            @Override
+            public boolean onScroll(ScrollEvent event) {
+                try {
+                    logger.setText(getElevation((GeoPoint) map.getMapCenter()));
+                } catch (ExecutionException e) {
+                    e.printStackTrace();
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+                return false;
+            }
+            @Override
+            public boolean onZoom(ZoomEvent event) {
+                return false;
+            }
+        },200));
+
+        spinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener(){
+            public void onItemSelected(AdapterView<?> parent, View view, int pos, long id){
+                Object item = parent.getItemAtPosition(pos);
+                setMap(item.toString());
+            }
+
+            public void onNothingSelected(AdapterView<?> parent){}
+        });
+
+        waymark.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener(){
+            public void onCheckedChanged(CompoundButton buttonView, boolean isChecked){
+                if(isChecked)
+                    map.getOverlays().add(waymarkLayer);
+                else
+                    map.getOverlays().remove(waymarkLayer);
+            }
+        });
+
+        searchView.setOnQueryTextListener(new SearchView.OnQueryTextListener() {
+            @Override
+            public boolean onQueryTextSubmit(String query) {
+                GeoPoint location = reverseGeocoding(query);
+                if(location != null){
+                    map.getController().animateTo(location);
+                    markerLocation.setPosition(location);
+                    markerLocation.setAnchor(Marker.ANCHOR_CENTER, Marker.ANCHOR_BOTTOM);
+                    map.getOverlays().add(markerLocation);
+                }else{
+                    Toast.makeText(MainActivity.this, "No Match found",Toast.LENGTH_LONG).show();
+                }
+                return false;
+            }
+
+            @Override
+            public boolean onQueryTextChange(String newText) {
+                //    adapter.getFilter().filter(newText);
+                return false;
+            }
+        });
+
+        touchOverlay();
+    }
+
+
 
     public void onResume() {
         super.onResume();
@@ -457,6 +564,10 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
             return true;
         }
     }
+
+
+
+
 
     @Override
     public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults) {
