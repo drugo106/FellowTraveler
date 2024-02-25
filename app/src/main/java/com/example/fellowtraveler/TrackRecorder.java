@@ -73,14 +73,14 @@ public class TrackRecorder extends Thread{
                 List<GeoPoint> points = track.getActualPoints();
                 GeoPoint myLocation = mLocation.getMyLocation();
                 if(points.size() > 0) {
-                    if (!points.get(points.size() - 1).equals(new GeoPoint(mLocation.getMyLocation())))
-                        track.addPoint(myLocation);
+                    //if (!points.get(points.size() - 1).equals(new GeoPoint(mLocation.getMyLocation())))
+                    track.addPoint(myLocation);
                 }else
                     track.addPoint(myLocation);
 
                 try {
                     String timeStamp = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(new java.util.Date());
-                    timeStamp = timeStamp.replace(" ","T");
+                    //timeStamp = timeStamp.replace(" ","T");
                     gpxStr+="<trkpt lat=\""+myLocation.getLatitude()+"\" lon=\""+myLocation.getLongitude()+"\">"+
                             "<ele>"+new RetrieveElevationTask().execute(myLocation.getLatitude(),myLocation.getLongitude()).get()+"</ele>"+
                             "<time>"+timeStamp+"</time>"+

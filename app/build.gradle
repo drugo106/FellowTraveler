@@ -34,7 +34,7 @@ dependencies {
 
     implementation 'org.osmdroid:osmdroid-android:6.1.13'
     //    implementation 'org.osmdroid:osmdroid-android:6.1.6'
-
+    implementation 'com.jjoe64:graphview:4.2.2'
     implementation 'com.github.MKergall:osmbonuspack:6.9.0'
     implementation 'androidx.appcompat:appcompat:1.4.1'
     implementation 'com.google.android.material:material:1.6.0'

@@ -1,14 +1,1 @@
-<resources>
-    <string name="app_name">FellowTraveler</string>
-    <string name="title_activity_record_track">RecordTrackActivity</string>
-
-    <string-array name="sport_array">
-        <item>MAPNIK</item>
-        <item>CyclOSM</item>
-        <item>OCM</item>
-        <item>ORM</item>
-    </string-array>
-
-
-
-</resources>
+<resources></resources>

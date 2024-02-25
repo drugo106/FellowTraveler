@@ -32,11 +32,12 @@ public class RetrieveElevationTask extends AsyncTask<Double, Void, String> {
                 JSONObject json = new JSONObject(res);
                 result = json.getJSONArray("results").getJSONObject(0).getString("elevation");
                 if(result.equals("null"))
-                    result = "No Data";
+                    result = "0"; //NO DATA
+
                 else
                     result = (int) Math.round(Double.parseDouble(result)) +"";
             } catch (IOException e) {
-                result = "No Connection";
+                result = "0";  //NO CONNECTION
                 e.printStackTrace();
             } catch (Exception e) {
                 System.out.println(url);

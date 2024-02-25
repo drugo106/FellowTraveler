@@ -1,15 +1,20 @@
 package com.example.fellowtraveler;
 
+import static android.view.View.GONE;
+import static android.view.View.VISIBLE;
+
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 
 import android.Manifest;
 import android.content.Context;
+import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.graphics.Canvas;
 
+import android.graphics.Paint;
 import android.graphics.drawable.Drawable;
 import android.location.Address;
 import android.location.LocationListener;
@@ -23,8 +28,10 @@ import android.view.MotionEvent;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
+import android.widget.Button;
 import android.widget.CheckBox;
 import android.widget.CompoundButton;
+import android.widget.EditText;
 import android.widget.SearchView;
 import android.widget.Spinner;
 import android.widget.TextView;
@@ -67,6 +74,8 @@ import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.net.HttpURLConnection;
+import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
@@ -77,6 +86,7 @@ import javax.xml.parsers.ParserConfigurationException;
 
 public class MainActivity extends AppCompatActivity implements AdapterView.OnItemSelectedListener {
 
+    private static boolean FIRST_START = true;
     private MapView map;
     private IMapController mapController;
     private MyLocationNewOverlay mLocationOverlay;
@@ -88,6 +98,8 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
     private SearchView searchView;
     private Spinner spinner;
     private Marker markerLocation;
+    private ArrayList<Marker> routeMarkers;
+    private Polyline route;
 
     private LocationListener mLocationListener;
     private DelayedMapListener mapListener;
@@ -99,18 +111,18 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
     private static final String TAG = "OsmActivity";
     private static final int PERMISSION_REQUEST_CODE = 1;
     private ScaleBarOverlay mScaleBarOverlay;
+    private static String selectedMap = "MAPNIK";
+    public static String newMap = "MAPNIK";
 
     private File pathToSave;
 
     private String USER_AGENT = Configuration.getInstance().getUserAgentValue();
-
-
+    private Context context = this;
 
 
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-
         //handle permissions first, before map is created. not depicted here
 
         //load/initialize the osmdroid configuration, this can be done
@@ -146,15 +158,16 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
         waymark = findViewById(R.id.waymark_check);
         waymarkLayer = MyMaps.waymarkOverlay(this);
         searchView = (SearchView) findViewById(R.id.searchView);
+        /*
         spinner = (Spinner) findViewById(R.id.sport_spinner);
         ArrayAdapter<CharSequence> adapter = ArrayAdapter.createFromResource(this,
                 R.array.sport_array, android.R.layout.simple_spinner_item);
         adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
         spinner.setAdapter(adapter);
-
+        */
         //INIZIALIZE MAP
-        setMap(loadPreference("map"));
         //map.setBuiltInZoomControls(true);
+        setMap(loadPreference("map"));
         map.setMultiTouchControls(true);
         //map.addMapListener(new MyMapListener());
         mapController = map.getController();
@@ -173,7 +186,7 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
 
         //DEBUG
         //touchOverlay();
-        getRoute();
+        //getRoute();
         //show my location + if is following
 
 
@@ -181,37 +194,27 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
 
     }
 
-    
 
-    private GeoPoint reverseGeocoding(String query){
-        GeocoderNominatim geocoder = new GeocoderNominatim(USER_AGENT);
-        try {
-            List<Address> address = geocoder.getFromLocationName(query,1);
-            //System.out.println("@@@@@@@@@@@@@@@ " + a.getExtras().getCharSequence("display_name"));
-            if(address.size()>0)
-                return new GeoPoint(address.get(0).getLatitude(),address.get(0).getLongitude());
-            return null;
-        } catch (IOException e) {
-            e.printStackTrace();
-            return null;
-        }
-
-    }
 
     private void setMap(String name) {
         //clear cache before change map
-        SqlTileWriter sqlTileWriter = new SqlTileWriter();
-        boolean b = sqlTileWriter.purgeCache();
-        sqlTileWriter.onDetach();
-        //cazzola style
-        try {
-            Class<?> c = Class.forName("com.example.fellowtraveler.MyMaps");
-            Method method = c.getDeclaredMethod(name);
-            map.setTileSource((ITileSource) method.invoke(null, null));
-        } catch (ClassNotFoundException | NoSuchMethodException | InvocationTargetException | IllegalAccessException e) {
-            e.printStackTrace();
+
+        if(!selectedMap.equals(name)) {
+            selectedMap = name;
+            SqlTileWriter sqlTileWriter = new SqlTileWriter();
+            boolean b = sqlTileWriter.purgeCache();
+            sqlTileWriter.onDetach();
+            //cazzola style
+            try {
+                Class<?> c = Class.forName("com.example.fellowtraveler.MyMaps");
+                Method method = c.getDeclaredMethod(name);
+                map.getTileProvider().clearTileCache();
+                map.setTileSource((ITileSource) method.invoke(null, null));
+            } catch (ClassNotFoundException | NoSuchMethodException | InvocationTargetException | IllegalAccessException e) {
+                e.printStackTrace();
+            }
+            savePreference("map", name);
         }
-        savePreference("map",name);
     }
 
     private void setMarkerOnStartPosition(GeoPoint startPoint) {
@@ -282,42 +285,32 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
     }
 
 
-
-    private void getRoute(){
-        OSRMRoadManager roadManager = new OSRMRoadManager(this, USER_AGENT);
-        roadManager.setMean(OSRMRoadManager.MEAN_BY_BIKE);
-        ArrayList<GeoPoint> waypoints = new ArrayList<GeoPoint>();
-        waypoints.add( new GeoPoint(45.4654219, 9.1859243));
-        waypoints.add(new GeoPoint(45.634039, 9.276861));
-        Road road = roadManager.getRoad(waypoints);
-        Polyline roadOverlay = RoadManager.buildRoadOverlay(road);
-        map.getOverlays().add(roadOverlay);
-        map.invalidate();
-
-        Drawable nodeIcon = getResources().getDrawable(R.drawable.marker_node);
-        for (int i=1; i<road.mNodes.size()-1; i++){
-            RoadNode node = road.mNodes.get(i);
-            Marker nodeMarker = new Marker(map);
-            nodeMarker.setSnippet(node.mInstructions);
-            nodeMarker.setSubDescription(Road.getLengthDurationText(this, node.mLength, node.mDuration));
-            nodeMarker.setPosition(node.mLocation);
-            nodeMarker.setIcon(nodeIcon);
-            nodeMarker.setAnchor(Marker.ANCHOR_CENTER, Marker.ANCHOR_CENTER);
-            nodeMarker.setTitle("Step "+i);
-            map.getOverlays().add(nodeMarker);
+    private void removeRoute(){
+        if(routeMarkers != null){
+            for(Marker m: routeMarkers)
+                map.getOverlays().remove(m);
+            routeMarkers = null;
         }
-
+        if(route != null) {
+            map.getOverlays().remove(route);
+            route = null;
+        }
+        map.invalidate();
     }
 
-
-    private void loadTracks(){
-
+    private File[] loadFilesTrack(){
         pathToSave = this.getExternalFilesDir(null);
         pathToSave.mkdirs();
         File[] files = new File(String.valueOf(pathToSave)).listFiles();
+        return files;
+    }
+
+    private void loadTracks(){
+        File[] files = loadFilesTrack();
         DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
         for(File f: files) {
             Polyline track = new Polyline(map);
+            track.getOutlinePaint().setStrokeCap(Paint.Cap.ROUND);
             new Thread() {
                 public void run() {
                     try {
@@ -334,14 +327,13 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
                                 Element element = (Element) node;
                                 String e = element.getElementsByTagName("ele").item(0).getTextContent();
                                 String t = element.getElementsByTagName("time").item(0).getTextContent();
-
                                 Double lat = Double.parseDouble(((Element) node).getAttribute("lat"));
                                 Double lon = Double.parseDouble(((Element) node).getAttribute("lon"));
                                 track.addPoint(new GeoPoint(lat, lon));
                             }
                         }
                         map.getOverlays().add(track);
-
+                        System.out.println(f+" ####### "+track.getActualPoints().size());
                     } catch (ParserConfigurationException | IOException | SAXException e) {
                         e.printStackTrace();
                     }
@@ -385,24 +377,48 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
                 //      dlgThread();
                 return true;
             }
+
+            @Override
+            public boolean onDoubleTap(MotionEvent e, MapView mapView){
+                removeRoute();
+                map.invalidate();
+                System.out.println(route);
+                return true;
+            }
         };
         map.getOverlays().add(touchOverlay);
     }
 
     public void savePreference(String key, String value){
-        SharedPreferences sharedPreferences = getSharedPreferences("MySharedPref",MODE_PRIVATE);
+        SharedPreferences sharedPreferences = getSharedPreferences("MySharedPref",0);
         SharedPreferences.Editor myEdit = sharedPreferences.edit();
         myEdit.putString(key,value);
         myEdit.apply();
     }
 
     public String loadPreference(String key){
-        SharedPreferences sh = getSharedPreferences("MySharedPref", MODE_PRIVATE);
-        String s1 = sh.getString(key, "CyclOSM");
+        SharedPreferences sh = getSharedPreferences("MySharedPref", 0);
+        String s1 = sh.getString(key, "Spinal");
         return s1;
     }
 
+    public void createRoute(String vehicles){
+        EditText editS = findViewById(R.id.start_waypoint);
+        EditText editE = findViewById(R.id.end_waypoint);
+        String start = editS.getText().toString();
+        String end = editE.getText().toString();
+        removeRoute();
+        Road road = Geocoding.getRoad(context, start, end, vehicles);
+        route = Geocoding.getRoute(road);
+        map.getOverlays().add(route);
+        routeMarkers = Geocoding.getMarkers(context,map,road);
+        for(Marker m: routeMarkers)
+            map.getOverlays().add(m);
+        map.invalidate();
+    }
+
     private void startServices(){
+
         new Thread(){
             public void run() {
                 while(true) {
@@ -471,14 +487,20 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
             }
         },200));
 
-        spinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener(){
+        /*spinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener(){
             public void onItemSelected(AdapterView<?> parent, View view, int pos, long id){
                 Object item = parent.getItemAtPosition(pos);
-                setMap(item.toString());
+                Intent intent = getIntent();
+                String newmap = intent.getStringExtra("map");
+                if (newmap != null) {
+                    setMap(newmap);
+                    intent.removeExtra("map");
+                }else
+                    setMap(item.toString());
             }
 
             public void onNothingSelected(AdapterView<?> parent){}
-        });
+        });*/
 
         waymark.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener(){
             public void onCheckedChanged(CompoundButton buttonView, boolean isChecked){
@@ -492,7 +514,7 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
         searchView.setOnQueryTextListener(new SearchView.OnQueryTextListener() {
             @Override
             public boolean onQueryTextSubmit(String query) {
-                GeoPoint location = reverseGeocoding(query);
+                GeoPoint location = Geocoding.reverseGeocoding(query);
                 if(location != null){
                     map.getController().animateTo(location);
                     markerLocation.setPosition(location);
@@ -511,6 +533,62 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
             }
         });
 
+        findViewById(R.id.rout_btn).setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                View search_layout = findViewById(R.id.search_layout);
+                if (search_layout.getVisibility() == VISIBLE){
+                    findViewById(R.id.search_layout).setVisibility(GONE);
+                    findViewById(R.id.route_layout).setVisibility(View.VISIBLE);
+                }else{
+                    findViewById(R.id.search_layout).setVisibility(VISIBLE);
+                    findViewById(R.id.route_layout).setVisibility(GONE);
+                }
+            }
+        });
+
+        findViewById(R.id.car_route).setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                createRoute(OSRMRoadManager.MEAN_BY_CAR );
+            }
+        });
+
+        findViewById(R.id.bike_route).setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                createRoute(OSRMRoadManager.MEAN_BY_BIKE );
+            }
+        });
+
+        findViewById(R.id.foot_route).setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                createRoute(OSRMRoadManager.MEAN_BY_FOOT );
+            }
+        });
+
+
+        findViewById(R.id.map_btn).setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Intent intent = new Intent(MainActivity.this, SelectMapActivity.class);
+                intent.putExtra("task","map");
+                startActivity(intent);
+            }
+        });
+
+        findViewById(R.id.track_btn).setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Intent intent = new Intent(MainActivity.this, SelectMapActivity.class);
+                intent.putExtra("task","track");
+                startActivity(intent);
+            }
+        });
+
+
+
         touchOverlay();
     }
 
@@ -521,7 +599,12 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
         //this will refresh the osmdroid configuration on resuming.
         //if you make changes to the configuration, use
         //SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
-        //Configuration.getInstance().load(this, PreferenceManager.getDefaultSharedPreferences(this));
+        //Configuration.getInstance().load(this, PreferenceManager.getDefaultSharedPreferences(this))
+        if (!FIRST_START)
+            setMap(newMap);
+        else
+            FIRST_START = false;
+
         if (map != null) {
             if (!isRecording) {
                 map.onResume(); //needed for compass, my location overlays, v6.0.0 and u

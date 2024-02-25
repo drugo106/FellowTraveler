@@ -32,6 +32,7 @@
             app:layout_constraintVertical_bias="1.0" />
 
 
+
         <ImageView
             android:id="@+id/imageView"
             android:layout_width="64dp"
@@ -91,10 +92,11 @@
             app:layout_constraintVertical_bias="0.953" />
 
         <Button
-            android:id="@+id/record_btn"
+            android:id="@+id/rout_btn"
             android:layout_width="49dp"
             android:layout_height="53dp"
-            android:background="@android:drawable/ic_media_play"
+            android:layout_marginBottom="60dp"
+            android:background="@drawable/start_rout"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintHorizontal_bias="0.118"
@@ -102,12 +104,56 @@
             app:layout_constraintTop_toTopOf="parent"
             app:layout_constraintVertical_bias="0.952" />
 
-    </androidx.constraintlayout.widget.ConstraintLayout>
+        <Button
+            android:id="@+id/record_btn"
+            android:layout_width="49dp"
+            android:layout_height="53dp"
+            android:background="@android:drawable/ic_media_play"
+            android:tint="@android:color/black"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintHorizontal_bias="0.118"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintVertical_bias="0.952" />
 
+        <Button
+            android:id="@+id/map_btn"
+            android:layout_width="49dp"
+            android:layout_height="53dp"
+            android:layout_marginBottom="60dp"
+            android:background="@android:drawable/ic_menu_mapmode"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintHorizontal_bias="0.946"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintVertical_bias="0.952" />
+
+        <Button
+            android:id="@+id/track_btn"
+            android:layout_width="49dp"
+            android:layout_height="53dp"
+            android:layout_marginBottom="60dp"
+            android:background="@android:drawable/ic_menu_view"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintHorizontal_bias="0.946"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintVertical_bias="0.85" />
+
+    </androidx.constraintlayout.widget.ConstraintLayout>
+    <LinearLayout
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        >
     <RelativeLayout
-        android:id="@+id/relativelayout"
+        android:id="@+id/search_layout"
         android:layout_width="match_parent"
-        android:layout_height="80dp">
+        android:layout_height="80dp"
+        >
 
         <!-- List View from which data is to be searched -->
         <!--<ListView
@@ -125,8 +171,57 @@
             android:layout_alignParentTop="true"
             android:iconifiedByDefault="false"
             android:queryHint="Search Here" />
+
+
     </RelativeLayout>
 
+    <FrameLayout
+        android:id="@+id/route_layout"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="#292929"
+        android:visibility="gone">
+
+        <EditText
+            android:id="@+id/start_waypoint"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="Start waypoint"/>
+        <EditText
+            android:id="@+id/end_waypoint"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="50dp"
+            android:hint="End waypoint"/>
+
+        <Button
+            android:id="@+id/car_route"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="100dp"
+            android:text="car"
+            />
+        <Button
+            android:id="@+id/bike_route"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="50dp"
+            android:layout_gravity="center"
+            android:text="bike"
+            />
+
+        <Button
+            android:id="@+id/foot_route"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="100dp"
+            android:layout_gravity="right"
+            android:text="foot"
+            />
+
+
+    </FrameLayout>
+    </LinearLayout>
     <!-- Navigation Drawer -->
     <com.google.android.material.navigation.NavigationView
         android:id="@+id/nav_view"
@@ -148,13 +243,13 @@
             android:textSize="20dp"
             />
 
-        <Spinner
+        <!--<Spinner
             android:id="@+id/sport_spinner"
             android:layout_height="50dp"
             android:layout_width="200dp"
             android:layout_marginStart="15dp"
             android:layout_marginTop="130dp"
-            />
+            />-->
 
         <CheckBox
             android:id="@+id/waymark_check"
@@ -166,11 +261,7 @@
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent" />
 
-        <View
-            android:layout_width="match_parent"
-            android:layout_height="1dp"
-            android:background="@color/black"
-            android:layout_marginTop="250dp"/>
+
 
         <Button
             android:id="@+id/btn_sing_in"

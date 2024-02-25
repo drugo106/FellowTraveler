@@ -12,6 +12,10 @@ import org.osmdroid.util.MapTileIndex;
 import org.osmdroid.views.MapView;
 import org.osmdroid.views.overlay.TilesOverlay;
 
+import java.io.IOException;
+import java.net.HttpURLConnection;
+import java.net.URL;
+
 public class MyMaps {
     // Open Cycle Map is common that doesn't download tiles and i think that is the cause that make some thread (RetriveElevationTask)
     //crash in C level (tombsone)
@@ -49,6 +53,151 @@ public class MyMaps {
                         tileURLs,
                         "from open cycle map");
         return OCM;
+    }
+
+    public static ITileSource Spinal(){
+        String[] tileURLs = {"http://a.tile.thunderforest.com/spinal-map/",
+                "http://b.tile.thunderforest.com/spinal-map/",
+                "http://c.tile.thunderforest.com/spinal-map/"};
+
+        ITileSource Spinal =
+                new XYTileSource("Open Cycle Map",
+                        0,
+                        19,
+                        512,
+                        ".png?apikey=774e562d81c94d36bf6f489e0f0a33ec",
+                        tileURLs,
+                        "from open cycle map");
+        return Spinal;
+    }
+
+
+    public static ITileSource Transport(){
+        String[] tileURLs = {"http://a.tile.thunderforest.com/transport/",
+                "http://b.tile.thunderforest.com/transport/",
+                "http://c.tile.thunderforest.com/transport/"};
+
+        ITileSource Transport =
+                new XYTileSource("Open Cycle Map",
+                        0,
+                        19,
+                        512,
+                        ".png?apikey=774e562d81c94d36bf6f489e0f0a33ec",
+                        tileURLs,
+                        "from open cycle map");
+        return Transport;
+    }
+
+    public static ITileSource TransportDark(){
+        String[] tileURLs = {"http://a.tile.thunderforest.com/transport-dark/",
+                "http://b.tile.thunderforest.com/transport-dark/",
+                "http://c.tile.thunderforest.com/transport-dark/"};
+
+        ITileSource Atlas =
+                new XYTileSource("Open Cycle Map",
+                        0,
+                        19,
+                        512,
+                        ".png?apikey=774e562d81c94d36bf6f489e0f0a33ec",
+                        tileURLs,
+                        "from open cycle map");
+        return Atlas;
+    }
+
+    public static ITileSource Landscape(){
+        String[] tileURLs = {"http://a.tile.thunderforest.com/landscape/",
+                "http://b.tile.thunderforest.com/landscape/",
+                "http://c.tile.thunderforest.com/landscape/"};
+
+        ITileSource Landscape =
+                new XYTileSource("Open Cycle Map",
+                        0,
+                        19,
+                        512,
+                        ".png?apikey=774e562d81c94d36bf6f489e0f0a33ec",
+                        tileURLs,
+                        "from open cycle map");
+        return Landscape;
+    }
+
+    public static ITileSource Outdoors(){
+        String[] tileURLs = {"http://a.tile.thunderforest.com/outdoors/",
+                "http://b.tile.thunderforest.com/outdoors/",
+                "http://c.tile.thunderforest.com/outdoors/"};
+
+        ITileSource Outdoors =
+                new XYTileSource("Open Cycle Map",
+                        0,
+                        19,
+                        512,
+                        ".png?apikey=774e562d81c94d36bf6f489e0f0a33ec",
+                        tileURLs,
+                        "from open cycle map");
+        return Outdoors;
+    }
+
+    public static ITileSource Atlas(){
+        String[] tileURLs = {"http://a.tile.thunderforest.com/atlas/",
+                "http://b.tile.thunderforest.com/atlas/",
+                "http://c.tile.thunderforest.com/atlas/"};
+
+        ITileSource Atlas =
+                new XYTileSource("Open Cycle Map",
+                        0,
+                        19,
+                        512,
+                        ".png?apikey=774e562d81c94d36bf6f489e0f0a33ec",
+                        tileURLs,
+                        "from open cycle map");
+        return Atlas;
+    }
+
+    public static ITileSource MobileAtlas(){
+        String[] tileURLs = {"http://a.tile.thunderforest.com/mobile-atlas/",
+                "http://b.tile.thunderforest.com/mobile-atlas/",
+                "http://c.tile.thunderforest.com/mobile-atlas/"};
+
+        ITileSource MobileAtlas =
+                new XYTileSource("Open Cycle Map",
+                        0,
+                        19,
+                        512,
+                        ".png?apikey=774e562d81c94d36bf6f489e0f0a33ec",
+                        tileURLs,
+                        "from open cycle map");
+        return MobileAtlas;
+    }
+
+    public static ITileSource Pioneer(){
+        String[] tileURLs = {"http://a.tile.thunderforest.com/pioneer/",
+                "http://b.tile.thunderforest.com/pioneer/",
+                "http://c.tile.thunderforest.com/pioneer/"};
+
+        ITileSource Pioneer =
+                new XYTileSource("Open Cycle Map",
+                        0,
+                        19,
+                        512,
+                        ".png?apikey=774e562d81c94d36bf6f489e0f0a33ec",
+                        tileURLs,
+                        "from open cycle map");
+        return Pioneer;
+    }
+
+    public static ITileSource Neighbourhood(){
+        String[] tileURLs = {"http://a.tile.thunderforest.com/neighbourhood/",
+                "http://b.tile.thunderforest.com/neighbourhood/",
+                "http://c.tile.thunderforest.com/neighbourhood/"};
+
+        ITileSource Neighbourhood =
+                new XYTileSource("Open Cycle Map",
+                        0,
+                        19,
+                        512,
+                        ".png?apikey=774e562d81c94d36bf6f489e0f0a33ec",
+                        tileURLs,
+                        "from open cycle map");
+        return Neighbourhood;
     }
 
     public static ITileSource ORM(){
