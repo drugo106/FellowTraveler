@@ -26,7 +26,7 @@ public class Track {
     private Polyline track;
     private List<Double> speedPerPoint;
     private List<Double> ongoingDistance;
-    private List<Integer> elevations;
+    private List<Double> elevations;
     private List<Long> ongoingTime;
 
     public Track(String path){
@@ -74,7 +74,7 @@ public class Track {
                         totaldistance += getDistance(previousPoint,currentPoint);
                     }
                     ongoingDistance.add(totaldistance);
-                    elevations.add(Integer.valueOf(e));
+                    elevations.add(Double.valueOf(e));
                     ongoingTime.add(getDurationMilliseconds(start,t));
                     previousTime = t;
                     previousPoint = currentPoint;
@@ -135,7 +135,7 @@ public class Track {
         return ongoingDistance;
     }
 
-    public List<Integer> getElevations() {
+    public List<Double> getElevations() {
         return elevations;
     }
 

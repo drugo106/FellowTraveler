@@ -9,7 +9,7 @@ import androidx.viewpager2.adapter.FragmentStateAdapter;
 
 import com.example.fellowtraveler.Fragments.StatisticsFragment;
 import com.example.fellowtraveler.Fragments.SpeedGraphFragment;
-import com.example.fellowtraveler.Fragments.ThirdFragment;
+import com.example.fellowtraveler.Fragments.ElevationGraphFragment;
 
 public class MyPagerAdapter extends FragmentStateAdapter {
     int mNumOfTabs;
@@ -23,18 +23,22 @@ public class MyPagerAdapter extends FragmentStateAdapter {
     @NonNull
     @Override
     public Fragment createFragment(int position) {
+        Bundle args;
         switch (position) {
             case 0:
                 StatisticsFragment tab1 = new StatisticsFragment();
                 return tab1;
             case 1:
                 SpeedGraphFragment tab2 = new SpeedGraphFragment();
-                Bundle args = new Bundle();
+                args = new Bundle();
                 args.putString("track",trackname);
                 tab2.setArguments(args);
                 return tab2;
             case 2:
-                ThirdFragment tab3 = new ThirdFragment();
+                ElevationGraphFragment tab3 = new ElevationGraphFragment();
+                args = new Bundle();
+                args.putString("track",trackname);
+                tab3.setArguments(args);
                 return tab3;
             default:
                 return null;
