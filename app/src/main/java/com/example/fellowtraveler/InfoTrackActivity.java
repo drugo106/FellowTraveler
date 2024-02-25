@@ -1,13 +1,17 @@
 package com.example.fellowtraveler;
 
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.viewpager.widget.PagerAdapter;
+import androidx.viewpager.widget.ViewPager;
+import androidx.viewpager2.widget.ViewPager2;
 
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.os.Handler;
-import android.view.View;
 
+import com.google.android.material.tabs.TabLayout;
+import com.google.android.material.tabs.TabLayoutMediator;
 import com.jjoe64.graphview.DefaultLabelFormatter;
 import com.jjoe64.graphview.GraphView;
 import com.jjoe64.graphview.series.DataPoint;
@@ -36,12 +40,38 @@ public class InfoTrackActivity extends AppCompatActivity {
     private GraphView graph;
     private Track track;
 
+    private ViewPager2 simpleViewPager;
+    private TabLayout tabLayout;
+
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_info_track);
 
+        Intent intent = getIntent();
         map = findViewById(R.id.map_single_track);
+        mapController = map.getController();
+        setMap(loadPreference("map"));
+        track = new Track(intent.getStringExtra("track"));
+        loadAndSetTrackOnMap();
+
+        simpleViewPager = findViewById(R.id.view_pager);
+        tabLayout = findViewById(R.id.tab_layout);
+        tabLayout.addTab(tabLayout.newTab());
+        tabLayout.addTab(tabLayout.newTab());
+        tabLayout.addTab(tabLayout.newTab());
+        MyPagerAdapter adapter = new MyPagerAdapter(this, tabLayout.getTabCount(),intent.getStringExtra("track") );
+        simpleViewPager.setAdapter(adapter);
+        String[] tabTitles = {"Statistics","Speed","Elevation"};
+        new TabLayoutMediator(tabLayout, simpleViewPager,
+                (tab, position) -> {
+                    tab.setText(tabTitles[position]);
+        }).attach();
+
+
+
+        /*map = findViewById(R.id.map_single_track);
         setMap(loadPreference("map"));
         mapController = map.getController();
         graph = findViewById(R.id.graph);
@@ -58,7 +88,7 @@ public class InfoTrackActivity extends AppCompatActivity {
         loadAndSetInfoTrack();
 
 
-
+        */
     }
 
     public String loadPreference(String key){
@@ -67,62 +97,24 @@ public class InfoTrackActivity extends AppCompatActivity {
         return s1;
     }
 
-    private void loadAndSetInfoTrack(){
-        new Thread() {
-            public void run() {
-                polyTrack = track.getPolyTrack();
-                speedPerPoint = track.getSpeedPerPoint();
-                ongoingDistance = track.getOngoingDistance();
-                ongoingtime = track.getOngoingTime();
-                elevations = track.getElevations();
-                runOnUiThread(new Runnable() {
-                    @Override
-                    public void run() {
-                        map.getOverlays().add(polyTrack);
-                        //map.zoomToBoundingBox(polyTrack.getBounds(),false);
-                        map.invalidate();
-                        new Handler().postDelayed(new Runnable() {
-                            @Override
-                            public void run() {
-                                map.zoomToBoundingBox(polyTrack.getBounds(), false);
-                                if(map.getZoomLevelDouble()<18) {
-                                    mapController.setZoom(map.getZoomLevelDouble() - 0.2);
-                                }else {
-                                    mapController.setZoom(18.);
-                                }
-                            }
-                        }, 100);
-                        //mapController.setZoom(15.);
-                        /*if(map.getZoomLevelDouble()>18) {
-                            mapController.setZoom(map.getZoomLevelDouble() - 0.2);
-                        }else {
-                            mapController.setZoom(18.);
-                        }*/
-                    }
-                });
-                drawTrackOnGraph();
-
-            }
-        }.start();
-    }
-
-    private void overrideFormatLabel(){
-        graph.getGridLabelRenderer().setLabelFormatter(new DefaultLabelFormatter() {
+    private void loadAndSetTrackOnMap(){
+        polyTrack = track.getPolyTrack();
+        map.getOverlays().add(polyTrack);
+        //map.zoomToBoundingBox(polyTrack.getBounds(),false);
+        map.invalidate();
+        new Handler().postDelayed(new Runnable() {
             @Override
-            public String formatLabel(double value, boolean isValueX) {
-                DecimalFormat nf = (DecimalFormat) NumberFormat.getInstance();
-                nf.setMinimumFractionDigits(0);
-                nf.setMaximumFractionDigits(0);
-                if (isValueX) {
-                    // show normal x values
-                    return timestampXAxis((long) value);
+            public void run() {
+                map.zoomToBoundingBox(polyTrack.getBounds(), false);
+                if (map.getZoomLevelDouble() < 18) {
+                    mapController.setZoom(map.getZoomLevelDouble() - 0.2);
                 } else {
-                    // show currency for y values
-                    return nf.format(value) + " km/h ";
+                    mapController.setZoom(18.);
                 }
             }
-        });
+        }, 100);
     }
+
 
     private void setMap(String name) {
         SqlTileWriter sqlTileWriter = new SqlTileWriter();
@@ -140,27 +132,5 @@ public class InfoTrackActivity extends AppCompatActivity {
 
     }
 
-    private void drawTrackOnGraph(){
-        DataPoint[] speedPoints = new DataPoint[speedPerPoint.size()];
-        DataPoint[] elevationPoints = new DataPoint[elevations.size()];
-
-        for(int i=0; i < speedPerPoint.size();i++) {
-            speedPoints[i] = new DataPoint(ongoingtime.get(i), speedPerPoint.get(i));
-            //elevationPoints[i] = new DataPoint(ongoingtime.get(i), elevations.get(i));
-        }
-        LineGraphSeries <DataPoint> speedPlot = new LineGraphSeries<>(speedPoints);
-        graph.addSeries(speedPlot);
-        //graph.getViewport().setYAxisBoundsManual(true);
-        overrideFormatLabel();
-        graph.getGridLabelRenderer().setLabelsSpace(0);
-        graph.getViewport().setScalable(true);
-
-    }
-
-    public static String timestampXAxis(long time){
-        int MM = (int) ((time / (1000*60)) % 60);
-        int HH   = (int) ((time / (1000*60*60)) % 24);
-        return String.format("%d:%02d", HH, MM);
-    }
 
 }
