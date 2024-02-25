@@ -53,6 +53,11 @@ public class MapAdapter extends BaseAdapter {
             String map = maps[position];
 
             switch (map) {
+
+                case "MAPNIK":
+                    imageView.setImageResource(R.drawable.mapnik);
+                    break;
+
                 case "Spinal":
                     imageView.setImageResource(R.drawable.spinal);
                     break;

@@ -17,7 +17,7 @@ public class SelectMapActivity extends AppCompatActivity {
     GridView gridView;
 
     static final String[] MAPS = new String[] {
-            "OCM", "Outdoors", "Transport", "Transport Dark", "Landscape", "Spinal", "Atlas", "Mobile Atlas", "Pioneer", "Neighbourhood"};
+            "MAPNIK", "OCM", "Outdoors", "Transport", "Transport Dark", "Landscape", "Spinal", "Atlas", "Mobile Atlas", "Pioneer", "Neighbourhood"};
 
     private Context context;
 
