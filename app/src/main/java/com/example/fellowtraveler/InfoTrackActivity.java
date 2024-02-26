@@ -39,6 +39,7 @@ public class InfoTrackActivity extends AppCompatActivity {
     private TabLayout tabLayout;
     private SeekBar slider;
     private InfoWindowTrack infowindow;
+    private MyPagerAdapter adapter;
 
 
     @Override
@@ -66,7 +67,7 @@ public class InfoTrackActivity extends AppCompatActivity {
         tabLayout.addTab(tabLayout.newTab());
         tabLayout.addTab(tabLayout.newTab());
         tabLayout.addTab(tabLayout.newTab());
-        MyPagerAdapter adapter = new MyPagerAdapter(this, tabLayout.getTabCount(),intent.getStringExtra("track") );
+        adapter = new MyPagerAdapter(this, tabLayout.getTabCount(),intent.getStringExtra("track") );
         simpleViewPager.setAdapter(adapter);
         String[] tabTitles = {"Statistics","Speed","Elevation"};
         new TabLayoutMediator(tabLayout, simpleViewPager,
@@ -133,6 +134,10 @@ public class InfoTrackActivity extends AppCompatActivity {
                 infowindow.update(track.getMarkerInformation(progress));
                 infowindow.open(marker, marker.getPosition(), 0, -20);
                 map.invalidate();
+                if(adapter.speedFragment!=null)
+                    GraphTools.drawSpeedLine(adapter.speedFragment.graph,track.getOngoingTime().get(progress));
+                if(adapter.elevationFragment!=null)
+                    GraphTools.drawElevationLine(adapter.elevationFragment.graph,track.getOngoingTime().get(progress));
             }
 
             @Override
@@ -148,6 +153,7 @@ public class InfoTrackActivity extends AppCompatActivity {
         //marker.setInfoWindow(null); // Disables the built-in info window
         marker.setPosition(polyTrackPoints.get(0));
         marker.setAnchor(Marker.ANCHOR_CENTER, Marker.ANCHOR_CENTER);
+
         Drawable iconDrawable = getDrawable(R.drawable.progress_marker);
         Bitmap iconBitmap = Bitmap.createBitmap(iconDrawable.getIntrinsicWidth(),
                 iconDrawable.getIntrinsicHeight(), Bitmap.Config.ARGB_8888);

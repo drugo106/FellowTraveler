@@ -31,7 +31,7 @@ public class SpeedGraphFragment extends Fragment {
     private Track track;
     private List<Double> speedPerPoint;
     private List<Long> ongoingtime;
-    private CustomGraphView graph;
+    public GraphView graph;
 
 
 

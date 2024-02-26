@@ -21,7 +21,7 @@ public class ElevationGraphFragment extends Fragment {
     private Track track;
     private List<Long> ongoingtime;
     private List<Double> elevations;
-    private CustomGraphView graph;
+    public GraphView graph;
 
 
     @Override

@@ -14,6 +14,10 @@ import com.example.fellowtraveler.Fragments.ElevationGraphFragment;
 public class MyPagerAdapter extends FragmentStateAdapter {
     int mNumOfTabs;
     String trackname;
+    public StatisticsFragment tab1;
+    public SpeedGraphFragment speedFragment;
+    public ElevationGraphFragment elevationFragment;
+
     public MyPagerAdapter(FragmentActivity context, int NumOfTabs, String trackname) {
         super(context);
         this.mNumOfTabs = NumOfTabs;
@@ -26,20 +30,20 @@ public class MyPagerAdapter extends FragmentStateAdapter {
         Bundle args;
         switch (position) {
             case 0:
-                StatisticsFragment tab1 = new StatisticsFragment();
+                tab1 = new StatisticsFragment();
                 return tab1;
             case 1:
-                SpeedGraphFragment tab2 = new SpeedGraphFragment();
+                speedFragment = new SpeedGraphFragment();
                 args = new Bundle();
                 args.putString("track",trackname);
-                tab2.setArguments(args);
-                return tab2;
+                speedFragment.setArguments(args);
+                return speedFragment;
             case 2:
-                ElevationGraphFragment tab3 = new ElevationGraphFragment();
+                elevationFragment = new ElevationGraphFragment();
                 args = new Bundle();
                 args.putString("track",trackname);
-                tab3.setArguments(args);
-                return tab3;
+                elevationFragment.setArguments(args);
+                return elevationFragment;
             default:
                 return null;
         }
