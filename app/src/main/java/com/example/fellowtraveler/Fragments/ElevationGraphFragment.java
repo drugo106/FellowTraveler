@@ -1,5 +1,6 @@
 package com.example.fellowtraveler.Fragments;
 
+import android.graphics.Color;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -7,6 +8,7 @@ import android.view.ViewGroup;
 
 import androidx.fragment.app.Fragment;
 
+import com.example.fellowtraveler.CustomGraphView;
 import com.example.fellowtraveler.GraphTools;
 import com.example.fellowtraveler.R;
 import com.example.fellowtraveler.Track;
@@ -19,7 +21,7 @@ public class ElevationGraphFragment extends Fragment {
     private Track track;
     private List<Long> ongoingtime;
     private List<Double> elevations;
-    private GraphView graph;
+    private CustomGraphView graph;
 
 
     @Override
@@ -45,7 +47,7 @@ public class ElevationGraphFragment extends Fragment {
             public void run() {
                 ongoingtime = track.getOngoingTime();
                 elevations = track.getElevations();
-                GraphTools.drawTrackOnGraph(graph,ongoingtime,elevations,"m");
+                GraphTools.drawTrackOnGraph(graph,ongoingtime,elevations,"m", Color.MAGENTA, 5);
             }
         }.start();
     }

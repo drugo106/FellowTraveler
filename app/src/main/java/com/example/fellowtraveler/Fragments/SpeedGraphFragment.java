@@ -1,6 +1,7 @@
 package com.example.fellowtraveler.Fragments;
 
 import android.annotation.SuppressLint;
+import android.graphics.Color;
 import android.os.Bundle;
 import android.os.Handler;
 import android.view.LayoutInflater;
@@ -10,6 +11,7 @@ import android.view.ViewGroup;
 
 import androidx.fragment.app.Fragment;
 
+import com.example.fellowtraveler.CustomGraphView;
 import com.example.fellowtraveler.GraphTools;
 import com.example.fellowtraveler.R;
 import com.example.fellowtraveler.Track;
@@ -29,7 +31,7 @@ public class SpeedGraphFragment extends Fragment {
     private Track track;
     private List<Double> speedPerPoint;
     private List<Long> ongoingtime;
-    private GraphView graph;
+    private CustomGraphView graph;
 
 
 
@@ -51,6 +53,7 @@ public class SpeedGraphFragment extends Fragment {
         graph = fragmentView.findViewById(R.id.speed_graph);
         GraphTools.setGraph(graph);
         loadAndSetInfoTrack();
+
         return fragmentView;
     }
 
@@ -59,7 +62,7 @@ public class SpeedGraphFragment extends Fragment {
             public void run() {
                 speedPerPoint = track.getSpeedPerPoint();
                 ongoingtime = track.getOngoingTime();
-                GraphTools.drawTrackOnGraph(graph,ongoingtime,speedPerPoint,"km/h");
+                GraphTools.drawTrackOnGraph(graph,ongoingtime,speedPerPoint,"km/h", Color.BLUE,5);
             }
         }.start();
     }

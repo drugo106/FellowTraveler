@@ -16,16 +16,23 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
 
+    <SeekBar
+        android:id="@+id/seekbar"
+        android:layout_width="390dp"
+        android:layout_height="wrap_content"
+        android:layout_below="@+id/map_single_track"
+        android:layout_marginTop="4dp"
+        app:haloRadius="0dp"
+        app:thumbRadius="7dp"
+        app:trackHeight="3dp" />
 
     <com.google.android.material.tabs.TabLayout
         android:id="@+id/tab_layout"
         android:layout_width="match_parent"
-        android:layout_height="46dp"
-        android:layout_below="@+id/map_single_track"
+        android:layout_height="31dp"
         android:layout_alignParentBottom="true"
-        android:layout_marginTop="0dp"
-        android:layout_marginBottom="427dp"
-        app:tabBackground="@android:color/darker_gray"
+        android:layout_marginBottom="419dp"
+        app:tabBackground="@color/custom_gray"
         app:tabIndicatorColor="#f00"
         app:tabSelectedTextColor="#f00"
         app:tabTextColor="#000" />
@@ -33,7 +40,7 @@
     <androidx.viewpager2.widget.ViewPager2
         android:id="@+id/view_pager"
         android:layout_width="match_parent"
-        android:layout_height="427dp"
+        android:layout_height="387dp"
         android:layout_alignParentBottom="true"
         android:layout_marginTop="0dp"
         android:layout_marginBottom="0dp"

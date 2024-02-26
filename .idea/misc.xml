@@ -6,6 +6,8 @@
         <entry key="..\:/AndroidStudioProjects/FellowTraveler/app/src/main/res/drawable/border.xml" value="0.2585" />
         <entry key="..\:/AndroidStudioProjects/FellowTraveler/app/src/main/res/drawable/ic_continue.xml" value="0.2585" />
         <entry key="..\:/AndroidStudioProjects/FellowTraveler/app/src/main/res/drawable/marker_node.xml" value="0.2585" />
+        <entry key="..\:/AndroidStudioProjects/FellowTraveler/app/src/main/res/drawable/progress_marker.xml" value="0.2595" />
+        <entry key="..\:/AndroidStudioProjects/FellowTraveler/app/src/main/res/drawable/speech_baloon.xml" value="0.1165" />
         <entry key="..\:/AndroidStudioProjects/FellowTraveler/app/src/main/res/drawable/target.xml" value="0.2265" />
         <entry key="..\:/AndroidStudioProjects/FellowTraveler/app/src/main/res/layout/activity_info_track.xml" value="0.264" />
         <entry key="..\:/AndroidStudioProjects/FellowTraveler/app/src/main/res/layout/activity_main.xml" value="0.24010416666666667" />
@@ -18,6 +20,8 @@
         <entry key="..\:/AndroidStudioProjects/FellowTraveler/app/src/main/res/layout/fragment_first.xml" value="0.10520833333333333" />
         <entry key="..\:/AndroidStudioProjects/FellowTraveler/app/src/main/res/layout/fragment_second.xml" value="0.10520833333333333" />
         <entry key="..\:/AndroidStudioProjects/FellowTraveler/app/src/main/res/layout/fragment_third.xml" value="0.10520833333333333" />
+        <entry key="..\:/AndroidStudioProjects/FellowTraveler/app/src/main/res/layout/info_window_track.xml" value="0.10520833333333333" />
+        <entry key="..\:/AndroidStudioProjects/FellowTraveler/app/src/main/res/layout/info_windows_layout.xml" value="0.11197916666666667" />
         <entry key="..\:/AndroidStudioProjects/FellowTraveler/app/src/main/res/layout/item_map.xml" value="0.25416666666666665" />
         <entry key="..\:/AndroidStudioProjects/FellowTraveler/app/src/main/res/layout/item_track.xml" value="0.4" />
         <entry key="..\:/AndroidStudioProjects/FellowTraveler/app/src/main/res/layout/speed_graph_fragment.xml" value="0.2" />

@@ -15,6 +15,7 @@ import java.io.IOException;
 import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
@@ -25,7 +26,7 @@ public class Track {
     private String name;
     private Polyline track;
     private List<Double> speedPerPoint;
-    private List<Double> ongoingDistance;
+    private List<Double> distanceCovered;
     private List<Double> elevations;
     private List<Long> ongoingTime;
 
@@ -38,7 +39,7 @@ public class Track {
 
     private void loadTrackAndSetFields(){
         speedPerPoint = new ArrayList<>();
-        ongoingDistance = new ArrayList<>();
+        distanceCovered = new ArrayList<>();
         elevations = new ArrayList<>();
         ongoingTime = new ArrayList<>();
         File file = new File(String.valueOf(this.path));
@@ -73,7 +74,7 @@ public class Track {
                         speedPerPoint.add(getSpeed(previousPoint,currentPoint,previousTime,t));
                         totaldistance += getDistance(previousPoint,currentPoint);
                     }
-                    ongoingDistance.add(totaldistance);
+                    distanceCovered.add(totaldistance);
                     elevations.add(Double.valueOf(e));
                     ongoingTime.add(getDurationMilliseconds(start,t));
                     previousTime = t;
@@ -131,8 +132,8 @@ public class Track {
         return speedPerPoint;
     }
 
-    public List<Double> getOngoingDistance() {
-        return ongoingDistance;
+    public List<Double> getDistanceCovered() {
+        return distanceCovered;
     }
 
     public List<Double> getElevations() {
@@ -187,6 +188,22 @@ public class Track {
 
     public Integer getMinElevation(){
         return min(elevations).intValue();
+    }
+
+    public String getDurationUntilNowFormatted(int i){
+        return millisecondsToTimestamp(ongoingTime.get(i));
+    }
+
+    public String getDistanceUntilNowFormatted(int i){
+        Double d = distanceCovered.get(i);
+        if(d<1000)
+            return String.format(Locale.getDefault(),"%.2f",d)+" m";
+        d = d/1000;
+        return String.format(Locale.getDefault(),"%.2f",d)+" km";
+    }
+
+    public String getMarkerInformation(int i){
+        return getDistanceUntilNowFormatted(i)+"  "+getDurationUntilNowFormatted(i);
     }
 
 }
