@@ -94,7 +94,9 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
     private TextView rec;
     private TextView pos;
     private CheckBox waymark;
+    private CheckBox seamark;
     private TilesOverlay waymarkLayer;
+    private TilesOverlay seamarkLayer;
     private SearchView searchView;
     private Spinner spinner;
     private Marker markerLocation;
@@ -118,6 +120,8 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
 
     private String USER_AGENT = Configuration.getInstance().getUserAgentValue();
     private Context context = this;
+    private CheckBox hikebikemark;
+    private TilesOverlay hikebikeLayer;
 
 
     @Override
@@ -156,7 +160,13 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
         pos = findViewById(R.id.pos);
         map = findViewById(R.id.mapView);
         waymark = findViewById(R.id.waymark_check);
-        waymarkLayer = MyMaps.waymarkOverlay(this);
+        seamark = findViewById(R.id.seamark_check);
+        hikebikemark = findViewById(R.id.hikebike_check);
+
+        waymarkLayer = MyMaps.WaymarkOverlay(this);
+        seamarkLayer = MyMaps.SeamarkOverlay(this);
+        hikebikeLayer = MyMaps.HikeBikeOverlay(this);
+
         searchView = (SearchView) findViewById(R.id.searchView);
         /*
         spinner = (Spinner) findViewById(R.id.sport_spinner);
@@ -508,6 +518,24 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
                     map.getOverlays().add(waymarkLayer);
                 else
                     map.getOverlays().remove(waymarkLayer);
+            }
+        });
+
+        seamark.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener(){
+            public void onCheckedChanged(CompoundButton buttonView, boolean isChecked){
+                if(isChecked)
+                    map.getOverlays().add(seamarkLayer);
+                else
+                    map.getOverlays().remove(seamarkLayer);
+            }
+        });
+
+        hikebikemark.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener(){
+            public void onCheckedChanged(CompoundButton buttonView, boolean isChecked){
+                if(isChecked)
+                    map.getOverlays().add(hikebikeLayer);
+                else
+                    map.getOverlays().remove(hikebikeLayer);
             }
         });
 

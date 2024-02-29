@@ -24,6 +24,14 @@ public class MyMaps {
         return TileSourceFactory.MAPNIK;
     }
 
+    public static ITileSource OpenTopo(){
+        return TileSourceFactory.OpenTopo;
+    }
+
+    public static ITileSource UsgTopo(){
+        return TileSourceFactory.USGS_TOPO;
+    }
+
     public static ITileSource CyclOSM(){
         String[] tileURLs = {"https://a.tile-cyclosm.openstreetmap.fr/cyclosm/",
                 "https://b.tile-cyclosm.openstreetmap.fr/cyclosm/",
@@ -232,7 +240,30 @@ public class MyMaps {
         return WMT;
     }
 
-    public static TilesOverlay waymarkOverlay(Context context){
+    //OVERLAYS
+
+    public static TilesOverlay SeamarkOverlay (Context context){
+        OnlineTileSourceBase openSeaMapTileSource = TileSourceFactory.OPEN_SEAMAP;
+        MapTileProviderBasic mapTileProvider = new MapTileProviderBasic(context);
+        mapTileProvider.setTileSource(openSeaMapTileSource);
+        TilesOverlay layer = new TilesOverlay(mapTileProvider, context);
+        layer.setLoadingBackgroundColor(Color.TRANSPARENT);
+        layer.setLoadingLineColor(Color.TRANSPARENT);
+        return layer;
+    }
+
+    public static TilesOverlay HikeBikeOverlay (Context context){
+        OnlineTileSourceBase openSeaMapTileSource = TileSourceFactory.HIKEBIKEMAP ;
+        MapTileProviderBasic mapTileProvider = new MapTileProviderBasic(context);
+        mapTileProvider.setTileSource(openSeaMapTileSource);
+        TilesOverlay layer = new TilesOverlay(mapTileProvider, context);
+        layer.setLoadingBackgroundColor(Color.TRANSPARENT);
+        layer.setLoadingLineColor(Color.TRANSPARENT);
+        return layer;
+    }
+
+
+    public static TilesOverlay WaymarkOverlay(Context context){
         MapTileProviderBasic provider = new MapTileProviderBasic(context, new OnlineTileSourceBase("Waymarked Trails", 0, 17, 512, ".png", new String[]{"https://tile.waymarkedtrails.org/hiking/"}) {
             @Override
             public String getTileURLString(long pMapTileIndex) {

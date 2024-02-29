@@ -12,6 +12,7 @@ import com.jjoe64.graphview.series.LineGraphSeries;
 
 import java.text.DecimalFormat;
 import java.text.NumberFormat;
+import java.util.ArrayList;
 import java.util.List;
 
 public class GraphTools {
@@ -64,6 +65,7 @@ public class GraphTools {
         DataPoint[] points = new DataPoint[Y.size()];
         for(int i=0; i < X.size();i++) {
             points[i] = new DataPoint(X.get(i), Y.get(i));
+            System.out.println("@@@@@@@@@@@@@@@@@@@@@@ "+Y.get(i));
         }
         LineGraphSeries<DataPoint> series = new LineGraphSeries<>(points);
         series.setColor(color);
@@ -122,4 +124,6 @@ public class GraphTools {
 
         graph.addSeries(elevationLineSeries);
     }
+
+
 }

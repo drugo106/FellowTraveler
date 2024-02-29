@@ -132,7 +132,7 @@ public class InfoTrackActivity extends AppCompatActivity {
                 marker.setPosition(polyTrackPoints.get(progress));
                 //marker.setSnippet(track.getDistanceUntilNowFormatted(progress));
                 infowindow.update(track.getMarkerInformation(progress));
-                infowindow.open(marker, marker.getPosition(), 0, -20);
+                infowindow.open(marker, marker.getPosition(), 0, -30);
                 map.invalidate();
                 if(adapter.speedFragment!=null)
                     GraphTools.drawSpeedLine(adapter.speedFragment.graph,track.getOngoingTime().get(progress));
@@ -154,9 +154,11 @@ public class InfoTrackActivity extends AppCompatActivity {
         marker.setPosition(polyTrackPoints.get(0));
         marker.setAnchor(Marker.ANCHOR_CENTER, Marker.ANCHOR_CENTER);
 
-        Drawable iconDrawable = getDrawable(R.drawable.progress_marker);
-        Bitmap iconBitmap = Bitmap.createBitmap(iconDrawable.getIntrinsicWidth(),
-                iconDrawable.getIntrinsicHeight(), Bitmap.Config.ARGB_8888);
+        Drawable iconDrawable = getDrawable(R.drawable.pepe_marker);
+        //Bitmap iconBitmap = Bitmap.createBitmap(iconDrawable.getIntrinsicWidth(),
+        //        iconDrawable.getIntrinsicHeight(), Bitmap.Config.ARGB_8888);
+        Bitmap iconBitmap = Bitmap.createBitmap(50,
+                50, Bitmap.Config.ARGB_8888);
         Canvas canvas = new Canvas(iconBitmap);
         iconDrawable.setBounds(0, 0, canvas.getWidth(), canvas.getHeight());
         iconDrawable.draw(canvas);
@@ -164,7 +166,7 @@ public class InfoTrackActivity extends AppCompatActivity {
         infowindow = new InfoWindowTrack(R.layout.custom_marker_info_window, map);
         marker.setInfoWindow(infowindow);
         infowindow.update(track.getMarkerInformation(0));
-        infowindow.open(marker, marker.getPosition(), 0, -20);
+        infowindow.open(marker, marker.getPosition(), 0, -30);
         //marker.setSnippet(track.getDistanceUntilNowFormatted(0));
 
         //marker.showInfoWindow();

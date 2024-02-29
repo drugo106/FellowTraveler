@@ -58,6 +58,10 @@ public class MapAdapter extends BaseAdapter {
                     imageView.setImageResource(R.drawable.mapnik);
                     break;
 
+                case "OpenTopo":
+                    imageView.setImageResource(R.drawable.opentopo);
+                    break;
+
                 case "Spinal":
                     imageView.setImageResource(R.drawable.spinal);
                     break;

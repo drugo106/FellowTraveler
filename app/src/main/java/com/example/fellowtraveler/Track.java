@@ -1,6 +1,7 @@
 package com.example.fellowtraveler;
 
 import android.graphics.Paint;
+import android.icu.text.DecimalFormat;
 
 import org.osmdroid.util.GeoPoint;
 import org.osmdroid.views.overlay.Polyline;
@@ -81,9 +82,24 @@ public class Track {
                     previousPoint = currentPoint;
                 }
             }
+
+            speedPerPoint = lowPassFilter(speedPerPoint);
+
         } catch (ParserConfigurationException | IOException | SAXException e) {
             e.printStackTrace();
         }
+    }
+
+    private List<Double> lowPassFilter(List<Double> X){
+        double alpha = 0.2; // Adjust alpha based on the level of filtering desired
+        LowPassFilter filter = new LowPassFilter(alpha);
+        ArrayList<Double> filtered = new ArrayList<>();
+        System.out.println("Filtered Signal:");
+        for (double value : X) {
+            value = Double.parseDouble(new DecimalFormat("#.").format(filter.filter(value)).replace(",","."));
+            filtered.add(value);
+        }
+        return filtered;
     }
 
     private double getDistance(GeoPoint previouse, GeoPoint current){
